@@ -1,0 +1,227 @@
+heat_template_version: 2013-05-23
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    #default: F17-x86_64-cfntools
+    default: precise-server-cloudimg-amd64-disk1
+    #default: cirros-0.3.2-x86_64-disk
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.small
+  key-name:
+    type: string
+    description: key name
+    default: gca
+  public_net:
+    type: string
+    description: ID or name of public network for which floating IP addresses will be allocated
+    default: b948542a-baaf-4ebf-a201-4fb158f6f59b
+  private_net_name:
+    type: string
+    description: Name of private network to be created
+    default: private1
+  private_net_cidr:
+    type: string
+    description: Private network address (CIDR notation)
+    default: 10.0.10.0/24
+  private_net_gateway:
+    type: string
+    description: Private network gateway address
+    default: 10.0.10.254
+  private_net_pool_start:
+    type: string
+    description: Start of private network IP address allocation pool
+    default: 10.0.10.10
+  private_net_pool_end:
+    type: string
+    description: End of private network IP address allocation pool
+    default: 10.0.10.250
+
+resources:
+  private_net:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: private_net_name }
+
+  private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_net }
+      cidr: { get_param: private_net_cidr }
+      gateway_ip: { get_param: private_net_gateway }
+      allocation_pools:
+        - start: { get_param: private_net_pool_start }
+          end: { get_param: private_net_pool_end }
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: { get_param: public_net }
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet }
+
+  connector_instance:
+    type: OS::Nova::Server
+    properties:
+      name: Connector
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks:
+        - port: { get_resource: connector_port }
+      #user_data_format: RAW
+      #user_data:
+      #  str_replace:
+      #    template: |
+      #      #!/bin/bash -v
+      #      echo $BROKER_IP > /home/cirros/ip
+      #      mkdir /home/cirros/test
+      #    params:
+      #      $BROKER_IP: { get_attr: [broker_instance, first_address] }
+
+  connector_port:
+    type: OS::Neutron::Port
+    properties: 
+      network_id: { get_resource: private_net }
+      fixed_ips: 
+        - subnet_id: { get_resource: private_subnet }
+      security_groups: [ { get_resource: server_security_group } ]
+
+  connector_floating_ip: 
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net }
+      port_id: { get_resource: connector_port }
+
+  broker_instance:
+    type: OS::Nova::Server
+    properties:
+      name: Broker
+      image: { get_param: image }
+      flavor: { get_param: flavor }  
+      networks:
+        - port: { get_resource: broker_port }
+  
+  broker_port:
+    type: OS::Neutron::Port
+    properties: 
+      network_id: { get_resource: private_net }
+      fixed_ips: 
+        - subnet_id: { get_resource: private_subnet }
+      security_groups: [ { get_resource: server_security_group } ]
+
+  #load_balancer:
+  #  type: OS::Neutron::LoadBalancer
+  #  properties:
+  #    protocol_port: 80
+  #    pool_id: { get_resource: media_server_pool }
+
+  media_server_group:
+    type: OS::Heat::AutoScalingGroup
+    properties:
+      min_size: 2
+      max_size: 3
+      resource:
+        type: lb_server.yaml
+        properties:
+          flavor: { get_param: flavor }
+          image: { get_param: image }
+          pool_id: { get_resource: media_server_pool }
+          private_net: { get_resource: private_net }
+          private_subnet : { get_resource: private_subnet }
+
+  media_server_pool:
+    type: OS::Neutron::Pool
+    properties:
+      protocol: HTTP
+      subnet_id: { get_resource: private_subnet }
+      monitors: [ { get_resource: monitor } ]
+      lb_method: SOURCE_IP
+      vip:
+        protocol_port: 80
+
+  media_server_scaleup_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: {get_resource: media_server_group}
+      cooldown: 60
+      scaling_adjustment: 1
+
+  media_server_scaledown_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: {get_resource: media_server_group}
+      cooldown: 60
+      scaling_adjustment: -1
+
+  cpu_alarm_high:
+    type: OS::Ceilometer::Alarm
+    properties:
+      description: Scale-up if the average CPU > 50% for 1 minute
+      meter_name: cpu_util
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: 50
+      alarm_actions:
+        - {get_attr: [media_server_scaleup_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      comparison_operator: gt
+
+  cpu_alarm_low:
+    type: OS::Ceilometer::Alarm
+    properties:
+      description: Scale-down if the average CPU < 15% for 10 minutes
+      meter_name: cpu_util
+      statistic: avg
+      period: 600
+      evaluation_periods: 1
+      threshold: 15
+      alarm_actions:
+        - {get_attr: [media_server_scaledown_policy, alarm_url]}
+      matching_metadata: {'metadata.user_metadata.stack': {get_param: "OS::stack_id"}}
+      comparison_operator: lt
+
+  monitor:
+    type: OS::Neutron::HealthMonitor
+    properties:
+      type: TCP
+      delay: 3
+      max_retries: 5
+      timeout: 5
+
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Add security group rules for server
+      name: security-group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+
+outputs:
+  connector_private_ip:
+    description: IP address of connector instance in private network
+    value: { get_attr: [ connector_instance, first_address ] }
+  broker_private_ip:
+    description: IP address of broker instance in private network
+    value: { get_attr: [ broker_instance, first_address ] }
+  #loadbalancer_private_ip:
+  #  description: IP address of load balancer in private network
+  #  value: { get_attr: [ load_balancer, first_address ] }
+  connector_public_ip:
+    description: Floating IP address of connector instance in public network
+    value: { get_attr: [ connector_floating_ip, floating_ip_address ] }
