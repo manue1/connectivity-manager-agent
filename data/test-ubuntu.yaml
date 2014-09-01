@@ -1,0 +1,46 @@
+heat_template_version: 2013-05-23
+
+description: >
+  Make use of filters: http://docs.openstack.org/havana/config-reference/content/scheduler-filters.html
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    default: ubuntu
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.nano
+  key-name:
+    type: string
+    description: Flavor to use for servers
+    default: stack
+  net-name:
+    type: string
+    description: Flavor to use for servers
+    default: mgmt
+  net-id:
+    type: string
+    description: Flavor to use for servers
+    default: fd71d519-ba63-4ae6-aaa1-167fe818dfd9
+
+resources:
+  server1:
+    type: OS::Nova::Server
+    properties:
+      name: test
+      key_name: {get_param: key-name }
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      networks: [{"network": { get_param: net-name },"uuid": {get_param: net-id },"fixed_ip": "172.19.4.89" },
+      {"network":"net_a" ,"uuid": "80cb68ad-11c4-4f6f-ae75-3fc878f48a75","fixed_ip": "172.19.5.89" }]
+Outputs:
+  ip:
+    Value:
+      Fn::GetAtt: [server1, addresses]
+    Description: IP addresses of the Server
+  id:
+    Value:
+      Fn::GetAtt: [server1, instance_name]
+    Description: ID of the server
