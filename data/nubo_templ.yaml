@@ -11,7 +11,7 @@ parameters:
     default: m1.small
   key-name:
     type: string
-    description: key name
+    description: Key to access instances
     default: tub-nubomedia
   public_net:
     type: string
@@ -29,6 +29,94 @@ parameters:
   router_port:
     type: string
     default: cebbea77-385b-4f5b-b410-ce828ab2723e
+  
+  bsg_image:
+    type: string 
+    description: Image for broker server group.
+    default: e1b065e1-71d1-42b3-ae65-067c342cfaa5
+  bsg_flavor:
+    type: string
+    description: Flavor of instances in broker server group.
+    default: m1.small
+    constraints:
+      - allowed_values: [ m1.tiny, m1.small, m1.medium, m1.large, m1.xlarge ]
+        description: Value must be one of m1.tiny, m1.small, m1.medium, m1.large or m1.xlarge.
+  bsg_min_size:
+    type: number
+    description: Minimal size for broker server group.
+    default: 1
+    constraints:
+      - range: { min: 1, max: 10 }
+        description: Minimal size must be a number between 1 and 10.
+  bsg_max_size:
+    type: number
+    description: Maximal size for broker server group.
+    default: 3
+    constraints:
+      - range: { min: 1, max: 10 }
+        description: Maximal size must be a number between 1 and 10.
+  bsg_meter_name:
+    type: string
+    description: Meter for the broker server group.
+    default: cpu_util
+  bsg_threshold_low:
+    type: number
+    description: Threshold to scale down the broker server group.
+    default: 15
+    constraints:
+      - range: { min: 0, max: 50000 }
+        description: Lower threshold must be a number between 0 and 50000.
+  bsg_threshold_high:
+    type: number
+    description: Threshold to scale up the broker server group.
+    default: 50
+    constraints:
+      - range: { min: 0, max: 50000 }
+        description: Upper threshold must be a number between 0 and 50000.
+
+  msg_image:
+    type: string
+    description: Image for media server group.
+    default: e1b065e1-71d1-42b3-ae65-067c342cfaa5
+  msg_flavor:
+    type: string
+    description: Flavor of instances in media server group.
+    default: m1.small
+    constraints:
+      - allowed_values: [ m1.tiny, m1.small, m1.medium, m1.large, m1.xlarge ]
+        description: Value must be one of m1.tiny, m1.small, m1.medium, m1.large or m1.xlarge.
+  msg_min_size:
+    type: number
+    description: Minimal size of media server group.
+    default: 1
+    constraints:
+      - range: { min: 1, max: 10 }
+        description: Minimal size must be a number between 1 and 10.
+  msg_max_size:
+    type: number
+    description: Maximal size of media server group.
+    default: 3
+    constraints:
+      - range: { min: 1, max: 10 }
+        description: Maximal size must be a number between 1 and 10.
+  msg_meter_name:
+    type: string
+    description: Meter for the media server group.
+    default: cpu_util
+  msg_threshold_low:
+    type: number
+    description: Threshold to scale down the media server group.
+    default: 15
+    constraints:
+      - range: { min: 0, max: 50000 }
+        description: Lower threshold must be a number between 1 and 50000.
+  msg_threshold_high:
+    type: number
+    description: Threshold to scale up the media server group.
+    default: 50
+    constraints:
+      - range: { min: 0, max: 50000 }
+        description: Upper threshold must be a number between 1 and 50000.
 
 resources:
   connector_instance:
@@ -40,14 +128,14 @@ resources:
       key_name: { get_param: key-name }
       networks:
         - port: { get_resource: connector_port }
-      user_data_format: RAW
-      user_data:
-        str_replace:
-          template: |
-            #!/bin/bash -v
-            echo $BROKER_IP > /home/ubuntu/broker_ip
-          params:
-            $BROKER_IP: { get_attr: [broker_instance, first_address] }
+      #user_data_format: RAW
+      #user_data:
+      #  str_replace:
+      #    template: |
+      #      #!/bin/bash -v
+      #      echo $BROKER_IP > /home/ubuntu/broker_ip
+      #    params:
+      #      $BROKER_IP: { get_attr: [broker_instance, first_address] }
 
   connector_port:
     type: OS::Neutron::Port
@@ -63,42 +151,108 @@ resources:
       floating_network_id: { get_param: public_net }
       port_id: { get_resource: connector_port }
 
-  broker_instance:
-    type: OS::Nova::Server
+  broker_server_group:
+    type: AWS::AutoScaling::AutoScalingGroup
     properties:
-      name: Broker
-      image: { get_param: image }
-      flavor: { get_param: flavor }  
-      key_name: { get_param: key-name }
-      networks:
-        - port: { get_resource: broker_port }
-      user_data_format: RAW
-      user_data:
-        str_replace:
-          template: |
-            #!/bin/bash -v
-            echo $MS_IPS > /home/ubuntu/media_server_ips
-          params:
-            $MS_IPS: { get_attr: [media_server_group, InstanceList] }
+      DesiredCapacity: 1
+      MinSize: { get_param: bsg_min_size }
+      MaxSize: { get_param: bsg_max_size }
+      AvailabilityZones: [{ 'FN::GetAZs': '' }]
+      LaunchConfigurationName: { get_resource: bsg_launch_configuration }
+      
+  bsg_launch_configuration:
+    type: AWS::AutoScaling::LaunchConfiguration
+    properties:
+      ImageId: { get_param: bsg_image }
+      InstanceType: { get_param: bsg_flavor }
+      KeyName: { get_param: key-name }
+      SecurityGroups: [ { get_resource: server_security_group } ]
+      #UserData:
+      #  str_replace:
+      #    template: |
+      #      #!/bin/bash -v
+      #      echo $MS_IPS > /home/ubuntu/media_server_ips
+      #    params:
+      #      $MS_IPS: { get_attr: [media_server_group, InstanceList] }
   
-  broker_port:
-    type: OS::Neutron::Port
-    properties: 
-      network_id: { get_param: private_net }
-      fixed_ips: 
-        - subnet_id: { get_param: private_subnet }
-      security_groups: [ { get_resource: server_security_group } ]
+  bsg_scaleup_policy:
+    type: AWS::AutoScaling::ScalingPolicy
+    properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: {get_resource: broker_server_group}
+      Cooldown: 60
+      ScalingAdjustment: 1
+
+  bsg_scaledown_policy:
+    type: AWS::AutoScaling::ScalingPolicy
+    properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: { get_resource: broker_server_group }
+      Cooldown: 60
+      ScalingAdjustment: -1
+  
+  bsg_alarm_high:
+    type: OS::Ceilometer::Alarm
+    properties:
+      meter_name: { get_param: bsg_meter_name }
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: { get_param: bsg_threshold_high }
+      alarm_actions:
+        - {get_attr: [bsg_scaleup_policy, AlarmUrl]}
+      matching_metadata: {'metadata.user_metadata.groupname': {get_resource: 'broker_server_group'}}
+      comparison_operator: gt
+
+  bsg_alarm_low:
+    type: OS::Ceilometer::Alarm
+    properties:
+      meter_name: { get_param: bsg_meter_name }
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: { get_param: bsg_threshold_low }
+      alarm_actions:
+        - {get_attr: [bsg_scaledown_policy, AlarmUrl]}
+      matching_metadata: {'metadata.user_metadata.groupname': {get_resource: 'broker_server_group'}}
+      comparison_operator: lt
+      
+  #broker_instance:
+  #  type: OS::Nova::Server
+  #  properties:
+  #    name: Broker
+  #    image: { get_param: image }
+  #    flavor: { get_param: flavor }  
+  #    key_name: { get_param: key-name }
+  #    networks:
+  #      - port: { get_resource: broker_port }
+  #    user_data_format: RAW
+  #    user_data:
+  #      str_replace:
+  #        template: |
+  #          #!/bin/bash -v
+  #          echo $MS_IPS > /home/ubuntu/media_server_ips
+  #        params:
+  #          $MS_IPS: { get_attr: [media_server_group, InstanceList] }
+  
+  #broker_port:
+  #  type: OS::Neutron::Port
+  #  properties: 
+  #    network_id: { get_param: private_net }
+  #    fixed_ips: 
+  #      - subnet_id: { get_param: private_subnet }
+  #    security_groups: [ { get_resource: server_security_group } ]
 
   media_server_group:
     type: AWS::AutoScaling::AutoScalingGroup
     properties:
-      DesiredCapacity: 2
+      DesiredCapacity: 1
+      MinSize: { get_param: msg_min_size }
+      MaxSize: { get_param: msg_max_size }
       AvailabilityZones: [{ 'FN::GetAZs': '' }]
-      MinSize: 1
-      MaxSize: 3
-      LaunchConfigurationName: { get_resource: launch_configuration }
+      LaunchConfigurationName: { get_resource: msg_launch_configuration }
   
-  launch_configuration:
+  msg_launch_configuration:
     type: AWS::AutoScaling::LaunchConfiguration
     properties:
       ImageId: { get_param: image }
@@ -106,7 +260,7 @@ resources:
       KeyName: { get_param: key-name }
       SecurityGroups: [ { get_resource: server_security_group } ]
 
-  media_server_scaleup_policy:
+  msg_scaleup_policy:
     type: AWS::AutoScaling::ScalingPolicy
     properties:
       AdjustmentType: ChangeInCapacity
@@ -114,7 +268,7 @@ resources:
       Cooldown: 60
       ScalingAdjustment: 1
 
-  media_server_scaledown_policy:
+  msg_scaledown_policy:
     type: AWS::AutoScaling::ScalingPolicy
     properties:
       AdjustmentType: ChangeInCapacity
@@ -122,31 +276,34 @@ resources:
       Cooldown: 60
       ScalingAdjustment: -1
   
-  cpu_alarm_high:
+  msg_alarm_high:
     type: OS::Ceilometer::Alarm
     properties:
       description: Scale-up if the average CPU > 30% for 1 minute
-      meter_name: cpu_util
+      meter_name: { get_param: msg_meter_name }
       statistic: avg
       period: 60
       evaluation_periods: 1
-      threshold: 30
+      threshold: { get_param: msg_threshold_high }
       alarm_actions:
-        - {get_attr: [media_server_scaleup_policy, AlarmUrl]}
+        - {get_attr: [msg_scaleup_policy, AlarmUrl]}
       matching_metadata: {'metadata.user_metadata.groupname': {get_resource: 'media_server_group'}}
+      - allowed_pattern: [0-9]*
+      - allowed_patter mit> }
+: [0-9]*
       comparison_operator: gt
 
-  cpu_alarm_low:
+  msg_alarm_low:
     type: OS::Ceilometer::Alarm
     properties:
       description: Scale-down if the average CPU < 15% for 1 minutes
-      meter_name: cpu_util
+      meter_name: { get_param: msg_meter_name }
       statistic: avg
       period: 60
       evaluation_periods: 1
-      threshold: 15
+      threshold: { get_param: msg_threshold_low }
       alarm_actions:
-        - {get_attr: [media_server_scaledown_policy, AlarmUrl]}
+        - {get_attr: [msg_scaledown_policy, AlarmUrl]}
       matching_metadata: {'metadata.user_metadata.groupname': {get_resource: 'media_server_group'}}
       comparison_operator: lt
   
@@ -167,15 +324,18 @@ outputs:
   connector_private_ip:
     description: IP address of connector instance in private network
     value: { get_attr: [ connector_instance, first_address ] }
-  broker_private_ip:
-    description: IP address of broker instance in private network
-    value: { get_attr: [ broker_instance, first_address ] }
+  #broker_private_ip:
+  #  description: IP address of broker instance in private network
+  #  value: { get_attr: [ broker_instance, first_address ] }
   connector_public_ip:
     description: Floating IP address of connector instance in public network
     value: { get_attr: [ connector_floating_ip, floating_ip_address ] }
   ScaleUpURL:
     description: url to scale up
     value: { get_attr : [media_server_scaleup_policy, AlarmUrl] }
-  scaling_group_ips:
-    description: IP addresses of scaling group instances in private network
+  msg_ips:
+    description: IP addresses of media server scaling group instances in private network
     value: { get_attr: [ media_server_group, InstanceList ] }
+  bsg_ips:
+    description: IP addresses of broker server scaling group instances in private network
+    value: { get_attr: [ broker_server_group, InstanceList ] }
