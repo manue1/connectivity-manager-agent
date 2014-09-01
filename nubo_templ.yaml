@@ -1,0 +1,181 @@
+heat_template_version: 2013-05-23
+
+parameters:
+  image:
+    type: string
+    description: Name of image to use for servers
+    default: e1b065e1-71d1-42b3-ae65-067c342cfaa5
+  flavor:
+    type: string
+    description: Flavor to use for servers
+    default: m1.small
+  key-name:
+    type: string
+    description: key name
+    default: tub-nubomedia
+  public_net:
+    type: string
+    description: ID or name of public network for which floating IP addresses will be allocated
+    default: 2e2bc7f9-c29c-467c-94b6-5ef3724d79ac
+  private_net:
+    type: string
+    default: fd704f1b-9238-4c2c-a0f5-4ffb4543e33a  
+  private_subnet:
+    type: string
+    default: ab4595bf-12d5-4e92-baa8-b5dfb3c1a31d
+  router:
+    type: string
+    default: 82bea54d-0413-4641-8bd3-2a540f4bad90
+  router_port:
+    type: string
+    default: cebbea77-385b-4f5b-b410-ce828ab2723e
+
+resources:
+  connector_instance:
+    type: OS::Nova::Server
+    properties:
+      name: Connector
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      key_name: { get_param: key-name }
+      networks:
+        - port: { get_resource: connector_port }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            echo $BROKER_IP > /home/ubuntu/broker_ip
+          params:
+            $BROKER_IP: { get_attr: [broker_instance, first_address] }
+
+  connector_port:
+    type: OS::Neutron::Port
+    properties: 
+      network_id: { get_param: private_net }
+      fixed_ips: 
+        - subnet_id: { get_param: private_subnet }
+      security_groups: [ { get_resource: server_security_group } ]
+
+  connector_floating_ip: 
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net }
+      port_id: { get_resource: connector_port }
+
+  broker_instance:
+    type: OS::Nova::Server
+    properties:
+      name: Broker
+      image: { get_param: image }
+      flavor: { get_param: flavor }  
+      key_name: { get_param: key-name }
+      networks:
+        - port: { get_resource: broker_port }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            echo $MS_IPS > /home/ubuntu/media_server_ips
+          params:
+            $MS_IPS: { get_attr: [media_server_group, InstanceList] }
+  
+  broker_port:
+    type: OS::Neutron::Port
+    properties: 
+      network_id: { get_param: private_net }
+      fixed_ips: 
+        - subnet_id: { get_param: private_subnet }
+      security_groups: [ { get_resource: server_security_group } ]
+
+  media_server_group:
+    type: AWS::AutoScaling::AutoScalingGroup
+    properties:
+      DesiredCapacity: 2
+      AvailabilityZones: [{ 'FN::GetAZs': '' }]
+      MinSize: 1
+      MaxSize: 3
+      LaunchConfigurationName: { get_resource: launch_configuration }
+  
+  launch_configuration:
+    type: AWS::AutoScaling::LaunchConfiguration
+    properties:
+      ImageId: { get_param: image }
+      InstanceType: { get_param: flavor }
+      KeyName: { get_param: key-name }
+      SecurityGroups: [ { get_resource: server_security_group } ]
+
+  media_server_scaleup_policy:
+    type: AWS::AutoScaling::ScalingPolicy
+    properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: {get_resource: media_server_group}
+      Cooldown: 60
+      ScalingAdjustment: 1
+
+  media_server_scaledown_policy:
+    type: AWS::AutoScaling::ScalingPolicy
+    properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: { get_resource: media_server_group }
+      Cooldown: 60
+      ScalingAdjustment: -1
+  
+  cpu_alarm_high:
+    type: OS::Ceilometer::Alarm
+    properties:
+      description: Scale-up if the average CPU > 30% for 1 minute
+      meter_name: cpu_util
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: 30
+      alarm_actions:
+        - {get_attr: [media_server_scaleup_policy, AlarmUrl]}
+      matching_metadata: {'metadata.user_metadata.groupname': {get_resource: 'media_server_group'}}
+      comparison_operator: gt
+
+  cpu_alarm_low:
+    type: OS::Ceilometer::Alarm
+    properties:
+      description: Scale-down if the average CPU < 15% for 1 minutes
+      meter_name: cpu_util
+      statistic: avg
+      period: 60
+      evaluation_periods: 1
+      threshold: 15
+      alarm_actions:
+        - {get_attr: [media_server_scaledown_policy, AlarmUrl]}
+      matching_metadata: {'metadata.user_metadata.groupname': {get_resource: 'media_server_group'}}
+      comparison_operator: lt
+  
+  server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Add security group rules for server
+      name: security-group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+
+outputs:
+  connector_private_ip:
+    description: IP address of connector instance in private network
+    value: { get_attr: [ connector_instance, first_address ] }
+  broker_private_ip:
+    description: IP address of broker instance in private network
+    value: { get_attr: [ broker_instance, first_address ] }
+  connector_public_ip:
+    description: Floating IP address of connector instance in public network
+    value: { get_attr: [ connector_floating_ip, floating_ip_address ] }
+  ScaleUpURL:
+    description: url to scale up
+    value: { get_attr : [media_server_scaleup_policy, AlarmUrl] }
+  scaling_group_ips:
+    description: IP addresses of scaling group instances in private network
+    value: { get_attr: [ media_server_group, InstanceList ] }
