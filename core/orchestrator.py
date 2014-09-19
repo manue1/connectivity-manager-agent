@@ -15,47 +15,51 @@
 __author__ = 'giuseppe'
 
 import os
+import util.TemplateManager as TemplateManager
+from util.HeatManager import HeatManager
 
-from sdk.mcn import util
 
-HERE = os.environ.get('OPENSHIFT_REPO_DIR', '.')
+HERE = '/net/u/mpa'
 
 
 class SoExecution(object):
     """
     classdocs
     """
-
-
-    def __init__(self, token, tenant_name):
+    def __init__(self, endpoint, **kwargs):
         """
         Constructor
         """
-        # read template...
-        f = open(os.path.join(HERE, 'data', 'imsaas-standalone.yaml'))
-        self.template = f.read()
-        self.token = token
-        self.tenant_name = tenant_name
-        f.close()
+        self.endpoint = endpoint
         self.stack_id = None
+        self.name = None
         # make sure we can talk to deployer...
-        self.deployer = util.get_deployer(self.token, url_type='public', tenant_name=self.tenant_name)
+        #self.heatManager = HeatManager(heat_url, **kc_args)
+        self.heatManager = HeatManager(endpoint=endpoint, **kwargs)
 
 
     def design(self):
         """
-        Deisgn method
+        Design method
         """
         pass
 
 
-    def deploy(self):
+    def deploy(self, **kwargs):
         """
         Deploy method
         """
-        print self.token
+        if kwargs.get('config_file'):
+            self.name, template = TemplateManager.substitute_template(config_file=kwargs.get('config_file'))
+            parameters = None
+        elif kwargs.get('parameters'):
+            template = self.template
+        else:
+            template = self.template
+
         if self.stack_id is None:
-            self.stack_id = self.deployer.deploy(self.template, self.token)
+            self.stack_id = self.heatManager.deploy(name=self.name, template=template, parameters=parameters)
+        return self.stack_id
 
 
 
@@ -70,8 +74,9 @@ class SoExecution(object):
         Dispose method
         """
         if self.stack_id is not None:
-            self.deployer.dispose(self.stack_id, self.token)
-            self.stack_id = None
+            self.heatManager.delete(self.stack_id)
+            #self.stack_id = None
+        return self.stack_id
 
 
     def state(self):
@@ -79,8 +84,8 @@ class SoExecution(object):
         Report on state.
         """
         if self.stack_id is not None:
-            tmp = self.deployer.details(self.stack_id, self.token)
-            if tmp['state'] != 'CREATE_COMPLETE':
+            tmp = self.heatManager.show(self.stack_id)
+            if tmp['stack_status'] != 'CREATE_COMPLETE':
                 return 'Stack is currently being deployed...'
             else:
                 return 'All good - Stack id is: ' + str(self.stack_id) + \
@@ -88,6 +93,15 @@ class SoExecution(object):
         else:
             return 'Stack is not deployed atm.'
 
+    def show(self, properties=[]):
+        """
+        Show stack information
+        """
+        if self.stack_id is not None:
+            tmp = self.heatManager.show(self.stack_id, properties = properties)
+            return tmp
+        else:
+            return 'Stack is not deployed atm.'
 
 class SoDecision(object):
     '''
@@ -110,11 +124,11 @@ class SoDecision(object):
         pass
 
 
-    def deploy(self):
+    def deploy(self, **kwargs):
         """
         Deploy method
         """
-        self.executor.deploy()
+        return self.executor.deploy(**kwargs)
 
 
     def provision(self):
@@ -127,7 +141,7 @@ class SoDecision(object):
         """
         Dispose method
         """
-        self.executor.dispose()
+        return self.executor.dispose()
 
 
 
@@ -137,11 +151,16 @@ class SoDecision(object):
         """
         return self.executor.state()
 
+    def show(self, properties=[]):
+        """
+        Show stack information
+        """
+        return self.executor.show(properties=properties)
 
 class ServiceOrchestrator(object):
 
-    def __init__(self, token, tenant_name):
-        self.so_d = SoDecision(SoExecution(token, tenant_name))
+    def __init__(self, endpoint, **kwargs):
+        self.so_d = SoDecision(SoExecution(endpoint=endpoint, **kwargs))
 
 
 

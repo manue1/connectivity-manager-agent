@@ -14,88 +14,130 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os
-try:
-    virtenv = os.environ.get('OPENSHIFT_PYTHON_DIR', '') + '/virtenv/'
-    virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
-    execfile(virtualenv, dict(__file__=virtualenv))
-except IOError:
-    pass
+USERNAME = 'nubomedia'
+PASSWORD = 'nub0m3d1@'
 
-try:
-    execfile(virtualenv, dict(__file__=virtualenv))
-except IOError:
-    pass
-#
-# IMPORTANT: Put any additional includes below this line.  If placed above this
-# line, it's possible required libraries won't be in your searchable path
 
 from core.orchestrator import ServiceOrchestrator
+from util.KeystoneManager import KeystoneManager
+from bottle import route, run, request, response, HTTPResponse
+#from heatclient.common import utils
+#import json
+import util.utils as utils
+
+orchestrators = {}
+
+@route('/stacks', method = "GET")
+def list():
+    stacks = []
+    for orchestrator in orchestrators.values():
+        #stacks[orchestrator.so_d.executor.name] = orchestrator.so_d.executor.stack_id
+        stacks.append(orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status']))
+        #stacks.append(orchestrator.so_d.show())
+        print stacks
+    response.body = utils.dict_to_json({"stacks":stacks})
+    response.status = 200
+    return response
+
+@route('/stacks/<stack_id>', method = "GET")
+def show(stack_id):
+    print "requested stack id: %s" % stack_id
+    orchestrator = orchestrators.get(stack_id)
+    if orchestrator is not None:
+        stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status'])
+        response.body = utils.dict_to_json({'stack':stack})
+        response.status = 200
+        response.content_type = 'application/json'
+        print "orchestrator: %s for stack (%s)" % (orchestrator, stack_id)
+    else:
+        response.body = utils.dict_to_json({"Error":"Stack (%s) was not found" % stack_id})
+        response.status = 404
+        response.content_type = 'application/json'
+        print "Stack (%s) not found" % stack_id
+    print "response body: %s" % response.body
+    return response
+
+@route('/stacks', method = 'OPTIONS')
+def deploy():
+    return HTTPResponse(status=200, body="OK")
+
+@route('/stacks', method = 'POST')
+def deploy():
+    config = request.body.getvalue()
+
+    keystoneManager = KeystoneManager(username=USERNAME, password=PASSWORD)
+
+    endpoint = keystoneManager.get_endpoint(service_type='orchestration')
+    print "endpoint: %s" % endpoint
+
+    kwargs = {}
+    kwargs['username'] = keystoneManager.get_username()
+    print "username: %s" % kwargs.get('username')
+
+    kwargs['password'] = keystoneManager.get_password()
+    print "password: %s" % kwargs.get('password')
+
+    kwargs['token'] = keystoneManager.get_token()
+    print "token: %s" % kwargs.get('token')
+
+    orchestrator = ServiceOrchestrator(endpoint=endpoint, **kwargs)
+
+    stack_id = str(orchestrator.so_d.deploy(config_file=config))
+
+    stack = {}
+    global orchestrators
+    if orchestrators.get(stack_id) is None:
+        orchestrators[stack_id] = orchestrator
+        #stack = {orchestrator.so_d.executor.name:stack_id}
+
+    stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status'])
+    response.body = utils.dict_to_json({"stack":stack})
+    response.status = 200
+    response.content_type = 'application/json'
+
+    #print "orch: %s" % orchestrator
+    #print "response: %s" % response
+    #print "response body: %s" % response.body
+
+    return response
 
 
-class Application:
-    """
-    # TODO: replace with OCCI wsgi app.
-    """
+@route('/stacks/<stack_id>', method = "DELETE")
+def dispose(stack_id):
+    #cookie = request.get_header("set-cookie")
+    #print "session cookie: %s" % cookie
 
-    def __init__(self):
-        self.so = None
+    #cookie_key = None
+    #cookie_value = None
 
-    def __call__(self, environ, start_response):
-        ctype = 'text/plain'
-        if environ['PATH_INFO'] == '/action=init' \
-                and environ['REQUEST_METHOD'] == 'POST':
-            token = environ.get('HTTP_X_AUTH_TOKEN', '')
-            tenant_name = environ.get('HTTP_X_TENANT_NAME', '')
-            self.so = ServiceOrchestrator(token, tenant_name)
-            response_body = "OK"
-        elif environ['PATH_INFO'] == '/action=deploy' \
-                and environ['REQUEST_METHOD'] == 'POST':
-            if self.so is None:
-                response_body = 'Please initialize SO with token first.'
-            else:
-                self.so.so_d.deploy()
-                response_body = str(self.so.so_d.executor.stack_id)
-        elif environ['PATH_INFO'] == '/action=dispose' \
-                and environ['REQUEST_METHOD'] == 'POST':
-            if self.so is None:
-                response_body = 'Please initialize SO with token first.'
-            else:
-                self.so.so_d.dispose()
-                response_body = "OK"
-        elif environ['PATH_INFO'] == '/state':
-            if self.so is None:
-                response_body = repr(environ)
-            else:
-                response_body = self.so.so_d.state()
-        else:
-            if self.so is None:
-                response_body = 'Please initialize SO with token first.'
-            else:
-                ctype = 'text/html'
-                response_body = "<a href=\"/state\">Show State</a><hr />"
-                response_body += "<form action=\"/action=deploy\" " \
-                                 "method=\"post\">" \
-                                 "<input type=\"submit\" value=\"Deploy\">" \
-                                 "</form>"
-                response_body += "<form action=\"/action=dispose\" " \
-                                 "method=\"post\">" \
-                                 "<input type=\"submit\" value=\"Dispose\">" \
-                                 "</form>"
+    #try:
+    #    cookie_key = cookie.split("=")[0]
+    #    cookie_value = cookie.split("=")[1]
+    #except:
+    #    print "no cookie"
 
-        status = '200 OK'
-        response_headers = [('Content-Type', ctype), ('Content-Length',
-                                                      str(len(response_body)))]
-        start_response(status, response_headers)
-        return [response_body]
+    #if cookie_key == "session" and cookie_value:
+    #    orchestrator = orchestrators.get(cookie_value)
+    #    orchestrator.so_d.dispose()
+    #    del orchestrators[cookie_value]
+    #    print "stack dispose"
+    orchestrator = orchestrators.get(stack_id)
+    if orchestrator is not None:
+        status = orchestrator.so_d.dispose()
+        stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time', 'stack_status'])
+        response.body = utils.dict_to_json({"stack":stack})
+        response.status = 200
+        response.content_type = 'application/json'
+        print "orchestrator: %s for stack (%s)" % (orchestrator, stack_id)
+        if status is None:
+            del orchestrators[stack_id]
+    else:
+        response.body = utils.dict_to_json({"Error":"Stack (%s) was not found." % stack_id})
+        response.status = 404
+        response.content_type = 'application/json'
+        print "Stack not found"
+    return response
 
-application = Application()
 
-#
-# Below for testing only
-#
-if __name__ == '__main__':
-    from wsgiref.simple_server import make_server
-    httpd = make_server('localhost', 8051, application)
-    # Wait for a single request, serve it and quit.
-    httpd.serve_forever()
+run(host='10.147.65.176', port=8080, debug=True)
+
