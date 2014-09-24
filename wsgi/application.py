@@ -20,19 +20,29 @@ PASSWORD = 'nub0m3d1@'
 
 from core.orchestrator import ServiceOrchestrator
 from util.KeystoneManager import KeystoneManager
-from bottle import route, run, request, response, HTTPResponse
+from bottle import hook, route, run, request, response, HTTPResponse
 #from heatclient.common import utils
 #import json
 import util.utils as utils
 
 orchestrators = {}
 
+
+@hook('after_request')
+def enable_cors():
+    response.headers['Access-Control-Allow-Origin'] = '*'
+
+@route('/stacks', method = 'OPTIONS')
+def deploy():
+    return HTTPResponse(status=200, body="OK")
+
 @route('/stacks', method = "GET")
 def list():
     stacks = []
     for orchestrator in orchestrators.values():
         #stacks[orchestrator.so_d.executor.name] = orchestrator.so_d.executor.stack_id
-        stacks.append(orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status']))
+        #stacks.append(orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status']))
+        stacks.append(orchestrator.so_d.show())
         #stacks.append(orchestrator.so_d.show())
         print stacks
     response.body = utils.dict_to_json({"stacks":stacks})
@@ -44,7 +54,8 @@ def show(stack_id):
     print "requested stack id: %s" % stack_id
     orchestrator = orchestrators.get(stack_id)
     if orchestrator is not None:
-        stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status'])
+        #stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status', 'output'])
+        stack = orchestrator.so_d.show()
         response.body = utils.dict_to_json({'stack':stack})
         response.status = 200
         response.content_type = 'application/json'
@@ -56,10 +67,6 @@ def show(stack_id):
         print "Stack (%s) not found" % stack_id
     print "response body: %s" % response.body
     return response
-
-@route('/stacks', method = 'OPTIONS')
-def deploy():
-    return HTTPResponse(status=200, body="OK")
 
 @route('/stacks', method = 'POST')
 def deploy():
@@ -90,7 +97,8 @@ def deploy():
         orchestrators[stack_id] = orchestrator
         #stack = {orchestrator.so_d.executor.name:stack_id}
 
-    stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status'])
+    #stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status', 'output'])
+    stack = orchestrator.so_d.show()
     response.body = utils.dict_to_json({"stack":stack})
     response.status = 200
     response.content_type = 'application/json'
@@ -124,7 +132,8 @@ def dispose(stack_id):
     orchestrator = orchestrators.get(stack_id)
     if orchestrator is not None:
         status = orchestrator.so_d.dispose()
-        stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time', 'stack_status'])
+        #stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time', 'stack_status', 'output'])
+        stack = orchestrator.so_d.show()
         response.body = utils.dict_to_json({"stack":stack})
         response.status = 200
         response.content_type = 'application/json'
@@ -139,5 +148,7 @@ def dispose(stack_id):
     return response
 
 
-run(host='10.147.65.176', port=8080, debug=True)
+if __name__ == '__main__':
+
+    run(host='10.147.65.176', port=8080, debug=True)
 
