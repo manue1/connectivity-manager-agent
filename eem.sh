@@ -20,10 +20,30 @@ function set_username_and_password {
 	echo "password=$password" >> $user_file
 }
 
+function check_username_and_password {
+  if [ -f "$user_file" ];
+  then
+    while read line
+    do
+      IFS='=' read -ra part <<<"$line"
+      echo $part
+      if ! ([ $part[0] == "username" ] || [ $part[0] == "password" ]);
+      then
+        echo "No username or password. Run init first."
+        exit 1
+      fi
+    done < "$user_file" 
+  else 
+    echo "No username and password. Run init first."
+    exit 1
+  fi
+}
+
 function check_root_privilegs {
-	if [[ $EUID -ne 0 ]]; then
-  	 echo "This option must be run as root" 1>&2
-	   exit 1
+	if [[ $EUID -ne 0 ]]; 
+  then
+    echo "This option must be run as root" 1>&2
+	  exit 1
 	fi
 }
 
@@ -47,20 +67,23 @@ function uninstall_server {
 }
 
 function check_requirements {
-	echo "check that python-pip is installed"
-	if [ $(dpkg-query -W -f='${Status}' python-pip 2>/dev/null | grep -c "ok installed") -eq 0 ];
-	then
-		echo "install python-pip"
-		apt-get install python-pip;
-		echo "python-pip was installed"
-	else
-		echo "python-pip was already installed"
-	fi
+	#echo "check that python-pip is installed"
+	#if [ $(dpkg-query -W -f='${Status}' python-pip 2>/dev/null | grep -c "ok installed") -eq 0 ];
+	#then
+	#	echo "Updating packages"
+  #  apt-get update
+  #  echo "Installing python-pip"
+	#	apt-get install python-pip;
+	#	echo "python-pip was installed"
+	#else
+	#	echo "python-pip was already installed"
+	#fi
 	echo "check that python setuptools is installed"
 	if [ $(pip show setuptools 2>/dev/null | grep -c "Version:") -eq 0 ];
 	then
-		echo "Install python setuptools"
-		pip install setuptools
+		echo "Installing python setuptools"
+		easy_install setuptools
+    #pip install setuptools
 		echo "python setuptools was installed"
 	else
 		echo "python setuptools was already installed"
@@ -70,18 +93,24 @@ function check_requirements {
 ###MAIN###
 
 case "$1" in
-install)check_root_privilegs
+install)
+  check_root_privilegs
 	check_requirements
-	set_username_and_password	
 	set_config_files	
 	compile_and_install_server
 	;;
-update)	check_root_privilegs 
+init)
+  set_username_and_password
+  ;;
+update)	
+  check_root_privilegs 
 	git pull
 	set_config_files
 	compile_and_install_server
 	;;
-start)	python wsgi/application.py
+start)	
+  check_username_and_password
+  python wsgi/application.py
 	;;	
 uninstall)
 	check_root_privilegs

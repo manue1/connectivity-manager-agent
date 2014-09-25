@@ -31,7 +31,7 @@ class TopologyManger(object):
 
         self.broker = {}
         self.broker['name'] = 'broker'
-        self.broker['image'] = 'kurento-image'
+        self.broker['image'] = 'kurento-broker'
         self.broker['flavor'] = config['nubomedia']['broker']['flavor']
         self.broker['key_name'] = config['nubomedia']['key_name']
         if resources.get('broker'):
@@ -62,7 +62,7 @@ class TopologyManger(object):
                 elif output_key == 'broker_private_ip':
                     self.broker['private_ip'] = output.get('output_value')
                 elif output_key == 'media_server_group_ips':
-                    self.media_server_group['private_ips'] = output.get('output_value')
+                    self.media_server_group['private_ips'] = output.get('output_value').split(',')
 
     def dump(self):
         resources = {}
