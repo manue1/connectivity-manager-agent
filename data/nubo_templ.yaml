@@ -179,6 +179,12 @@ outputs:
   connector_private_ip:
     description: IP address of connector instance in private network
     value: { get_attr: [ connector, first_address ] }
+  connector_image:
+    description: IP address of connector instance in private network
+    value: { get_attr: [ connector, show ] }
+  #connector_flavor:
+  #  description: IP address of connector instance in private network
+  #  value: { get_attr: [ media_server_group, show ] }
   broker_private_ip:
     description: IP address of broker instance in private network
     value: { get_attr: [ broker, first_address ] }

@@ -17,7 +17,8 @@ __author__ = 'giuseppe'
 import os
 import util.TemplateManager as TemplateManager
 from util.HeatManager import HeatManager
-
+import json
+from core.manager import TopologyManger
 
 HERE = '/net/u/mpa'
 
@@ -33,6 +34,8 @@ class SoExecution(object):
         self.endpoint = endpoint
         self.stack_id = None
         self.name = None
+        self.resources = {}
+        self.config = {}
         # make sure we can talk to deployer...
         #self.heatManager = HeatManager(heat_url, **kc_args)
         self.heatManager = HeatManager(endpoint=endpoint, **kwargs)
@@ -50,6 +53,7 @@ class SoExecution(object):
         Deploy method
         """
         if kwargs.get('config_file'):
+            self.config = json.loads(kwargs.get('config_file'))
             self.name, template = TemplateManager.substitute_template(config_file=kwargs.get('config_file'))
             parameters = None
         elif kwargs.get('parameters'):
@@ -98,10 +102,19 @@ class SoExecution(object):
         Show stack information
         """
         if self.stack_id is not None:
-            tmp = self.heatManager.show(self.stack_id, properties = properties)
-            return tmp
+            response = {}
+            stack = self.heatManager.show(self.stack_id, properties = properties)
+            resources = self.heatManager.get_resources(self.stack_id, resource_names=['connector','broker','media_server_group'])
+            if self.config:
+                topology = TopologyManger(stack=stack, config=self.config, resources=resources)
+                resources = topology.dump()
+            #resources = self.heatManager.get_resources(self.stack_id, resource_names=['broker','connector'])
+            response.update(stack)
+            response.update(resources)
+            return response
         else:
             return 'Stack is not deployed atm.'
+
 
 class SoDecision(object):
     '''

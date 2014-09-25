@@ -40,7 +40,6 @@ class HeatManager(object):
             kc_args['username'] = kwargs.get('username')
             kc_args['password'] = kwargs.get('password')
 
-        #print "heat args: %s" % kc_args
         self.heatClient = heatClient(endpoint=endpoint, **kc_args)
 
     def deploy(self, **kwargs):
@@ -79,12 +78,17 @@ class HeatManager(object):
             tmp_stack = stack.to_dict()
             if properties:
                 return_stack = {}
+                print "tmp_sack %s" % tmp_stack
                 for property in properties:
                     if tmp_stack.get(property):
                         return_stack[property] = tmp_stack.get(property)
-                return return_stack
             else:
-                return tmp_stack
+                return_stack = tmp_stack
+        #list = heatClient.resources.list(stack_id)
+        #return_stack.update(list)
+        return return_stack
+
+
             #formatters = {
             #    'description': utils.text_wrap_formatter,
             #    'template_description': utils.text_wrap_formatter,
@@ -145,3 +149,23 @@ class HeatManager(object):
                     else:
                         return
                 print (jsonutils.dumps(value, indent=2, ensure_ascii=False))
+
+    def get_resource_ids(self, stack_id, resource_names=[]):
+        resources_raw = self.heatClient.resources.list(stack_id)
+        resources = {}
+        for resource_raw in resources_raw:
+            resource = resource_raw.to_dict()
+            resource_name = resource['resource_name']
+            if resource_name in resource_names:
+                resources.update({resource_name:resource['physical_resource_id']})
+        return resources
+
+    def get_resources(self, stack_id, resource_names=[]):
+        resources = {}
+        for resource_name in resource_names:
+            try:
+                resource = self.heatClient.resources.get(stack_id, resource_name)
+                resources[resource_name] = resource.to_dict()
+            except:
+                resources[resource_name] = None
+        return resources

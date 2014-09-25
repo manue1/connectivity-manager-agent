@@ -12,33 +12,62 @@ PUBLIC_NET = '2e2bc7f9-c29c-467c-94b6-5ef3724d79ac'
 PRIVATE_NET = 'fd704f1b-9238-4c2c-a0f5-4ffb4543e33a'
 PRIVATE_SUBNET = 'ab4595bf-12d5-4e92-baa8-b5dfb3c1a31d'
 
+STATIC_CONFIG_PATH = '../data/static_config.json'
+
+class Template(object):
+    def __init__(self, user_config_file):
+        user_config = json.loads(user_config_file)
+        static_config = json.loads(open(os.path.join(os.path.dirname(__file__), STATIC_CONFIG_PATH)).read())
+
+        #Connector
+        connector_args = {}
+        connector_args['name'] = static_config['nubomedia']['connector']['name']
+        connector_args['image'] = static_config['nubomedia']['connector']['image']
+        connector_args['flavor'] = user_config['nubomedia']['connector']['flavor']
+        connector_args['key_name'] = user_config['nubomedia']['key_name']
+        connector_args['port_enable'] = True
+        connector_args['floating_ip_enable'] = True
+        connector_args['security_groups'] = []
+        connector_args['user_data'] = static_config['nubomedia']['connector']['user_data']
+
+        self.connector = Server(connector_args)
+
+        print self.connector.dump_to_dict()
+
+        media_server_group_args = {}
+        media_server_group_args['user_data'] = static_config['nubomedia']['media_server_group']['user_data']
+        print media_server_group_args['user_data']
+
+
 
 class Server(object):
-    def __init__(self, name, image, flavor, key_name, port_enable=False, floating_ip_enable=False, security_groups=None, user_data=None):
-        self.name = name
+    def __init__(self, args):
+    #def __init__(self, name, image, flavor, key_name, port_enable=False, floating_ip_enable=False, security_groups=None, user_data=None):
+        self.name = args.get('name')
         self.type = "OS::Nova::Server"
         self.properties = {}
-        self.properties['name'] = name
-        self.properties['image'] = image
-        self.properties['flavor'] = flavor
-        self.properties['key_name'] = key_name
-        if user_data:
+        self.properties['name'] = args.get('name')
+        self.properties['image'] = args.get('image')
+        self.properties['flavor'] = args.get('flavor')
+        self.properties['key_name'] = args.get('key_name')
+        if args.get('user_data'):
             self.properties['user_data_format'] = 'RAW'
             self.properties['user_data'] = {}
-            self.properties['user_data']['str_replace'] = user_data
+            self.properties['user_data']['str_replace'] = args.get('user_data')
 
-        self.port_enable = port_enable
-        if port_enable or floating_ip_enable:
+        self.port_enable = args.get('port_enable')
+        self.floating_ip_enable = args.get('floating_ip_enable')
+        self.security_groups = args.get('security_groups')
+        if self.port_enable or self.floating_ip_enable:
             self.port_enable = True
-            self.port = Port(name="%s_port" % name, security_groups = security_groups)
+            self.port = Port(name="%s_port" % self.name, security_groups = self.security_groups)
             self.properties['networks'] = []
             self.properties['networks'] = [{'port': {'get_resource': '%s' % self.port.name}}]
 
-        self.floating_ip_enable = floating_ip_enable
-        if floating_ip_enable:
-            self.floating_ip = FloatingIP(name='%s_floating_ip' % name, port=self.port)
+        if self.floating_ip_enable:
+            self.floating_ip = FloatingIP(name='%s_floating_ip' % self.name, port=self.port)
 
-    def parse_to_dict(self):
+    def dump_to_dict(self):
         resources = {}
         server_config = {}
         server_config['type'] = self.type
@@ -46,11 +75,11 @@ class Server(object):
         resources['%s' % self.name] = server_config
 
         if self.port_enable:
-            port_config = self.port.parse_to_dict()
+            port_config = self.port.dump_to_dict()
             resources.update(port_config)
 
         if self.floating_ip_enable:
-            floating_ip_config = self.floating_ip.parse_to_dict()
+            floating_ip_config = self.floating_ip.dump_to_dict()
             resources.update(floating_ip_config)
 
         return resources
@@ -65,9 +94,9 @@ class Port(object):
         if security_groups:
             self.properties['security_groups']=[]
             for security_group in security_groups:
-                self.properties['security_groups'].append({'get_resource':'%s' % security_group.name})
+                self.properties['security_groups'].append({'get_resource':security_group.name})
 
-    def parse_to_dict(self):
+    def dump_to_dict(self):
         resource = {}
         port_config = {}
         port_config['type'] = self.type
@@ -85,7 +114,7 @@ class FloatingIP(object):
         self.properties['floating_network_id'] = PUBLIC_NET
         self.properties['port_id'] = {'get_resource': '%s' % port.name}
 
-    def parse_to_dict(self):
+    def dump_to_dict(self):
         resource = {}
         floating_ip_config = {}
         floating_ip_config['type'] = self.type
@@ -105,10 +134,10 @@ class SecurityGroup(object):
         ssh_rule = Rule(remote_ip_prefix='0.0.0.0/0', port_range_max=22, port_range_min=22, protocol='tcp')
         icmp_rule = Rule(remote_ip_prefix='0.0.0.0/0', protocol='icmp')
 
-        self.properties['rules'].append(ssh_rule.parse_to_dict())
-        self.properties['rules'].append(icmp_rule.parse_to_dict())
+        self.properties['rules'].append(ssh_rule.dump_to_dict())
+        self.properties['rules'].append(icmp_rule.dump_to_dict())
 
-    def parse_to_dict(self):
+    def dump_to_dict(self):
         resource = {}
         security_group_config = {}
         security_group_config['type'] = self.type
@@ -124,7 +153,7 @@ class Rule(object):
         self.port_range_min = port_range_min
 
 
-    def parse_to_dict(self):
+    def dump_to_dict(self):
         config = {}
         config['remote_ip_prefix'] = self.remote_ip_prefix
         config['protocol'] = self.protocol
@@ -135,13 +164,123 @@ class Rule(object):
         return config
 
 class AutoScalingGroup(object):
-    pass
-class LaunchConfiguration(object):
-    pass
-class ScalingPolicy(object):
-    pass
-class Alarm(object):
+    def __init__(self, name, min_size, max_size, image, flavor, key_name, policies = None, security_groups = None, user_data = None):
+        self.name = name
+        self.type = 'AWS::AutoScaling::AutoScalingGroup'
+        self.properties = {}
+        self.properties['MinSize'] = min_size
+        self.properties['MaxSize'] = max_size
+        self.properties['AvailabiltyZones'] = [{'FN::GetAZs':''}]
 
+        self.launch_config = LaunchConfiguration(name = '%s_launch_configuration' % self.name, image = image, flavor = flavor, key_name = key_name, security_groups = security_groups, user_data = user_data)
+        self.properties['LaunchConfigurationName'] = { 'get_resource': self.launch_config.name }
+
+        self.alarms = []
+        self.actions = []
+        if policies:
+            for policy in policies:
+                policy_name = str(policy.get('name'))
+
+                policy_action = policy.get('action')
+                adjustment_type = str(policy_action.get('adjustment_type'))
+                scaling_adjustment = str(policy_action.get('scaling_adjustment'))
+                cooldown = str(policy_action.get('cooldown'))
+                action = ScalingPolicy(name = '%s_policy' % policy_name, adjustment_type=adjustment_type, scaling_adjustment=scaling_adjustment, cooldown=cooldown, scaling_group=self)
+                self.actions.append(action)
+
+                policy_alarm = policy.get('alarm')
+                meter_name = str(policy_alarm.get('meter_name'))
+                comparison_operator = str(policy_alarm.get('comparison_operator'))
+                threshold = str(policy_alarm.get('threshold'))
+                statistic = str(policy_alarm.get('statistic'))
+                period = str(policy_alarm.get('period'))
+                alarm = Alarm(name = '%s_alarm' % policy_name, meter_name=meter_name, statistic = statistic, comparison_operator=comparison_operator, threshold=threshold, period = period, scaling_group=self, policy = action)
+                self.alarms.append(alarm)
+
+    def dump_to_dict(self):
+        resources = {}
+        scaling_group_config = {}
+        scaling_group_config['type'] = self.type
+        scaling_group_config['properties'] = self.properties
+        resources[self.name] = scaling_group_config
+
+        resources.update(self.launch_config.dump_to_dict())
+
+        for alarm in self.alarms:
+            resources.update(alarm.dump_to_dict())
+        for action in self.actions:
+            resources.update(action.dump_to_dict())
+
+        return resources
+
+
+class LaunchConfiguration(object):
+    def __init__(self, name, image, flavor, key_name, security_groups = None, user_data = None):
+        self.name = name
+        self.type = 'AWS::AutoScaling::LaunchConfiguration'
+        self.properties={}
+        self.properties['ImageID'] = image
+        self.properties['InstanceType'] = flavor
+        self.properties['KeyName'] = key_name
+
+        if security_groups:
+            self.properties['SecurityGroups']=[]
+            for security_group in security_groups:
+                self.properties['SecurityGroups'].append({'get_resource':security_group.name})
+
+        if user_data:
+            self.properties['UserData'] = {}
+            self.properties['UserData']['str_replace'] = user_data
+
+    def dump_to_dict(self):
+        resource = {}
+        launch_config = {}
+        launch_config['type'] = self.type
+        launch_config['properties'] = self.properties
+        resource[self.name] = launch_config
+        return resource
+
+
+class ScalingPolicy(object):
+    def __init__(self, name, adjustment_type, scaling_group, cooldown, scaling_adjustment):
+        self.name = name
+        self.type = 'AWS::AutoScaling::ScalingPolicy'
+        self.properties = {}
+        self.properties['AdjustmentType'] = adjustment_type
+        self.properties['AutoScalingGroupName'] = scaling_group.name
+        self.properties['Cooldown'] = cooldown
+        self.properties['ScalingAdjustment'] = scaling_adjustment
+
+    def dump_to_dict(self):
+        resource = {}
+        scaling_config = {}
+        scaling_config['type'] = self.type
+        scaling_config['properties'] = self.properties
+        resource[self.name] = scaling_config
+        return resource
+
+class Alarm(object):
+    def __init__(self, name, meter_name, statistic, comparison_operator, period, threshold, scaling_group, policy):
+        self.name = name
+        self.type = 'OS::Ceilometer::Alarm'
+        self.properties = {}
+        self.properties['meter_name'] = meter_name
+        self.properties['statistic'] = statistic
+        self.properties['comparison_operator'] = comparison_operator
+        self.properties['period'] = period
+        self.properties['evaluation_periods'] = 1
+        self.properties['threshold'] = threshold
+        self.properties['repeat_actions'] = 'true'
+        self.properties['alarm_actions'] = [{'get_attr':[policy.name, 'AlarmUrl']}]
+        self.properties['matching_metadata'] = {'metadata.user_metadata.groupname':{'get_resource':scaling_group.name}}
+
+    def dump_to_dict(self):
+        resource = {}
+        alarm_config = {}
+        alarm_config['type'] = self.type
+        alarm_config['properties'] = self.properties
+        resource[self.name] = alarm_config
+        return resource
 
 if __name__ == '__main__':
     # f = open(os.path.join('/net/u/mpa/', 'nubomedia.json'))
@@ -306,21 +445,32 @@ if __name__ == '__main__':
                        port_enable=True, floating_ip_enable=True, user_data=connector_user_data, security_groups=[sec_group])
     broker = Server(name='broker', flavor='m1.small', image='kurento-broker', key_name='tub-nubomedia',
                     port_enable=True)
+    print config['nubomedia']['media_server_group']['policies']
+    media_server_group = AutoScalingGroup(name='media_server_group', key_name='tub-nubomedia', flavor = 'm1.medium', image = 'kurento-media-server', min_size=1, max_size=3, security_groups=[sec_group], policies=config['nubomedia']['media_server_group']['policies'])
 
-    sec_group_config = sec_group.parse_to_dict()
-    connector_config = connector.parse_to_dict()
-    broker_config = broker.parse_to_dict()
+
+
+    sec_group_config = sec_group.dump_to_dict()
+    connector_config = connector.dump_to_dict()
+    broker_config = broker.dump_to_dict()
+    media_server_config = media_server_group.dump_to_dict()
+
 
     resources = {}
     resources.update(connector_config)
     resources.update(broker_config)
     resources.update(sec_group_config)
+    resources.update(media_server_config)
 
     #print yaml.dump(resources)
 
     #print (template['resources']['connector_port'])
-    print (template['resources']['connector']['properties']['user_data'])
-    print resources['connector']['properties']['user_data']
+    print template
+    print resources
     #print (connector_config['connector_port'])
     #print yaml.dump(broker_config['broker_port'])
     print yaml.dump(resources)
+
+
+    #print json.loads(config_file)
+    template = Template(user_config_file=config_file)

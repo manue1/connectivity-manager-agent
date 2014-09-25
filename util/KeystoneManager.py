@@ -50,6 +50,7 @@ class KeystoneManager(object):
         self.tenant_name = self.ksclient.tenant_name
         self.username = self.ksclient.username
         self.password = self.ksclient.password
+        self.project_id = self.ksclient.project_id
 
     def get_endpoint(self, **kwargs):
         """Get an endpoint using the provided keystone client."""
@@ -89,5 +90,9 @@ class KeystoneManager(object):
             self.password = self.ksclient.password
         return self.password
 
+    def get_project_id(self):
+        if self.project_id is None:
+            self.project_id = self.ksclient.project_id
+        return self.project_id
 
 

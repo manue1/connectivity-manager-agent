@@ -1,0 +1,42 @@
+{
+    "nubomedia": {
+        "user": { 
+            "username": "nubomedia",
+            "password":"nub0m3d1@" 
+        },
+        "networks": {
+            "public_net": "2e2bc7f9-c29c-467c-94b6-5ef3724d79ac",
+            "private_net": "fd704f1b-9238-4c2c-a0f5-4ffb4543e33a", 
+            "private_subnet": "ab4595bf-12d5-4e92-baa8-b5dfb3c1a31d"
+        },
+        "connector": {
+            "name": "connector",
+            "image": "kurento-connector",
+            "user_data": {
+                "template": [
+                    "#!/bin/bash -v",
+                    "sudo sed -i 's/^(kmf.transport[ \\t]*)=thrift/\\1 = rabbitmq/' /etc/kurento/media-connector.properties",
+                    "sudo sed -i '$arabbitmq.address=$BROKER_IP:5672' /etc/kurento/media-connector.properties",
+                    "sudo service kmf-media-connector restart"
+                    ],
+                "params":{"$BROKER_IP": {"get_attr": ["broker", "first_address"]}}}
+        },
+        "broker": {
+            "name": "broker",
+            "image": "kurento-broker"
+        },
+        "media_server_group": {
+            "name": "media_server_group",
+            "image": "kurento-media-server",
+            "user_data": {
+                "template": [
+                    "#!/bin/bash -v",
+                    "sudo sed -i 's/^(serverAddress[ \t]*)=[ \t]*[0-9]*.[0-9]*.[0-9]*.[0-9]*.*$/1 = $BROKER_IP/' /etc/kurento/kurento.conf"
+                ],
+                "params": {
+                    "$BROKER_IP": {"get_attr": ["broker", "first_address"] }
+                }
+            }
+        }
+    }
+}

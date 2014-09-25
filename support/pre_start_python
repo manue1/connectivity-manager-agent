@@ -1,6 +1,0 @@
-#!/bin/bash
-
-echo "Setting environment variable"
-
-# This is the URL to your keystone endpoint, in this case the ZHAW testbed
-export DESIGN_URI='http://160.85.4.224:35357/v2.0'

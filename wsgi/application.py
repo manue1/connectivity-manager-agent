@@ -24,6 +24,7 @@ from bottle import hook, route, run, request, response, HTTPResponse
 #from heatclient.common import utils
 #import json
 import util.utils as utils
+import os
 
 orchestrators = {}
 
@@ -34,6 +35,10 @@ def enable_cors():
 
 @route('/stacks', method = 'OPTIONS')
 def deploy():
+    return HTTPResponse(status=200, body="OK")
+
+@route('/stacks/<stack_id>', method = 'OPTIONS')
+def deploy(stack_id):
     return HTTPResponse(status=200, body="OK")
 
 @route('/stacks', method = "GET")
@@ -54,7 +59,7 @@ def show(stack_id):
     print "requested stack id: %s" % stack_id
     orchestrator = orchestrators.get(stack_id)
     if orchestrator is not None:
-        #stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status', 'output'])
+        #stack = orchestrator.so_d.show(properties = ['stack_name', 'id', 'creation_time','parameters','stack_status', 'outputs'])
         stack = orchestrator.so_d.show()
         response.body = utils.dict_to_json({'stack':stack})
         response.status = 200
@@ -149,6 +154,6 @@ def dispose(stack_id):
 
 
 if __name__ == '__main__':
+    run(host='0.0.0.0', port=8080, debug=True)
 
-    run(host='10.147.65.176', port=8080, debug=True)
 
