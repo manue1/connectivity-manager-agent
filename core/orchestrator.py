@@ -104,8 +104,9 @@ class SoExecution(object):
         if self.stack_id is not None:
             response = {}
             stack = self.heatManager.show(self.stack_id, properties = properties)
+            resources = self.heatManager.get_resources(self.stack_id, resource_names=['connector','broker','media_server_group'])
             if self.config:
-                topology = TopologyManger(stack=stack, config=self.config)
+                topology = TopologyManger(stack=stack, config=self.config, resources=resources)
                 resources = topology.dump()
             #resources = self.heatManager.get_resources(self.stack_id, resource_names=['broker','connector'])
             response.update(stack)

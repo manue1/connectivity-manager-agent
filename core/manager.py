@@ -17,19 +17,27 @@ __author__ = 'gca'
 
 
 class TopologyManger(object):
-    def __init__(self, stack, config):
+    def __init__(self, stack, config, resources):
 
         self.connector = {}
         self.connector['name'] = 'connector'
         self.connector['image'] = 'kurento-connector'
         self.connector['flavor'] = config['nubomedia']['connector']['flavor']
         self.connector['key_name'] = config['nubomedia']['key_name']
+        if resources.get('connector'):
+            self.connector['status'] = resources['connector']['resource_status']
+        else:
+            self.connector['status'] = 'Null'
 
         self.broker = {}
         self.broker['name'] = 'broker'
         self.broker['image'] = 'kurento-image'
         self.broker['flavor'] = config['nubomedia']['broker']['flavor']
         self.broker['key_name'] = config['nubomedia']['key_name']
+        if resources.get('broker'):
+            self.broker['status'] = resources['broker']['resource_status']
+        else:
+            self.broker['status'] = 'Null'
 
         self.media_server_group = {}
         self.media_server_group['name'] = 'media_server_group'
@@ -38,6 +46,10 @@ class TopologyManger(object):
         self.media_server_group['min_size'] = config['nubomedia']['media_server_group']['min_size']
         self.media_server_group['max_size'] = config['nubomedia']['media_server_group']['max_size']
         self.media_server_group['policies'] = config['nubomedia']['media_server_group']['policies']
+        if resources.get('media_server_group'):
+            self.media_server_group['status'] = resources['media_server_group']['resource_status']
+        else:
+            self.media_server_group['status'] = 'Null'
 
         outputs = stack.get('outputs')
         if outputs:

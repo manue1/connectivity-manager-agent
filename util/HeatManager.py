@@ -150,7 +150,7 @@ class HeatManager(object):
                         return
                 print (jsonutils.dumps(value, indent=2, ensure_ascii=False))
 
-    def get_resources(self, stack_id, resource_names=[]):
+    def get_resource_ids(self, stack_id, resource_names=[]):
         resources_raw = self.heatClient.resources.list(stack_id)
         resources = {}
         for resource_raw in resources_raw:
@@ -158,4 +158,14 @@ class HeatManager(object):
             resource_name = resource['resource_name']
             if resource_name in resource_names:
                 resources.update({resource_name:resource['physical_resource_id']})
+        return resources
+
+    def get_resources(self, stack_id, resource_names=[]):
+        resources = {}
+        for resource_name in resource_names:
+            try:
+                resource = self.heatClient.resources.get(stack_id, resource_name)
+                resources[resource_name] = resource.to_dict()
+            except:
+                resources[resource_name] = None
         return resources
