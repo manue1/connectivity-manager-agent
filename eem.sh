@@ -67,23 +67,23 @@ function uninstall_server {
 }
 
 function check_requirements {
-	#echo "check that python-pip is installed"
-	#if [ $(dpkg-query -W -f='${Status}' python-pip 2>/dev/null | grep -c "ok installed") -eq 0 ];
-	#then
-	#	echo "Updating packages"
-  #  apt-get update
-  #  echo "Installing python-pip"
-	#	apt-get install python-pip;
-	#	echo "python-pip was installed"
-	#else
-	#	echo "python-pip was already installed"
-	#fi
+	echo "check that python-pip is installed"
+	if [ $(dpkg-query -W -f='${Status}' python-pip 2>/dev/null | grep -c "ok installed") -eq 0 ];
+	then
+		echo "Updating packages"
+    apt-get update
+    echo "Installing python-pip"
+		apt-get install python-pip;
+		echo "python-pip was installed"
+	else
+		echo "python-pip was already installed"
+	fi
 	echo "check that python setuptools is installed"
 	if [ $(pip show setuptools 2>/dev/null | grep -c "Version:") -eq 0 ];
 	then
 		echo "Installing python setuptools"
-		easy_install setuptools
-    #pip install setuptools
+		#easy_install setuptools
+    pip install setuptools
 		echo "python setuptools was installed"
 	else
 		echo "python setuptools was already installed"
