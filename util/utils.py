@@ -17,6 +17,8 @@ __author__ = 'mpa'
 
 import prettytable
 import json
+from model.Entities import Topology
+from model.Services import ServiceInstance, State
 
 def dict_to_table(data_dict, formatters={}):
     pt = prettytable.PrettyTable(['Property', 'Value'],
@@ -40,3 +42,15 @@ if __name__ == '__main__':
     print dict_to_table(stacks_dict)
     stack_json = dict_to_json(stacks_dict)
     print stack_json
+
+
+def stack_parser(template):
+    t =  yaml.load(template)
+    services = []
+    for key in t:
+        #print key, 'corresponds to', doc[key]
+        if 'Resources' in key:
+            for r in t[key]:
+                s = ServiceInstance(r, state = State.Initialised)
+                services.append(s)
+    return Topology('ims', service_instance_components=services)

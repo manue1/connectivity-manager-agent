@@ -37,17 +37,15 @@ class CeilometerManager(object):
         endpoint = 'http://80.96.122.48:8774'
         auth_plugin = client.get_auth_plugin(auth_url=AUTH_URL, endpoint = endpoint, **kwargs )
 
-        #self.ceiloClient = client.Client(version=2, auth_url=endpoint, username=username, password=password, token = token, auth_plugin='keystone')
         self.ceiloClient = client.Client(version=2, auth_url=endpoint, username=username, password=password, token = token, auth_plugin=auth_plugin)
 
     def get_resource(self, resource_id):
         return self.ceiloClient.resources.get(resource_id)
 
 if __name__ == '__main__':
-    keystoneManager = KeystoneManager(version=2, username="nubomedia", password="nub0m3d1@", interface='public')
+    keystoneManager = KeystoneManager(version=2, username="username", password="password", interface='public')
 
     endpoint = keystoneManager.get_endpoint(service_type='compute')
-    #endpoint = "http://80.96.122.48:8774/v2/fba35e226f4441c6b3b8bbd276f5d41a"
     print "endpoint: %s" % endpoint
 
     kwargs = {}

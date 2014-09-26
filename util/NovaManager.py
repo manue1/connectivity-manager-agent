@@ -53,10 +53,9 @@ class NovaManager(object):
 
 
 if __name__ == '__main__':
-    keystoneManager = KeystoneManager(username="nubomedia", password="nub0m3d1@", interface='public')
+    keystoneManager = KeystoneManager(username="username", password="password", interface='public')
 
     endpoint = keystoneManager.get_endpoint(service_type='compute')
-    #endpoint = "http://80.96.122.48:8774/v2/fba35e226f4441c6b3b8bbd276f5d41a"
     print "endpoint: %s" % endpoint
 
     kwargs = {}

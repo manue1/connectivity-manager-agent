@@ -22,8 +22,7 @@ from heatclient.openstack.common import jsonutils
 
 import heatclient.exc as exc
 
-#PATH_TO_TEMPLATE_FILE = '/net/u/mpa/templates/nubo_templ.yaml'
-#AUTH_URL= 'http://80.96.122.48:5000/v3'
+
 
 class HeatManager(object):
 
@@ -89,15 +88,7 @@ class HeatManager(object):
         return return_stack
 
 
-            #formatters = {
-            #    'description': utils.text_wrap_formatter,
-            #    'template_description': utils.text_wrap_formatter,
-            #    'stack_status_reason': utils.text_wrap_formatter,
-            #    'parameters': utils.json_formatter,
-            #    'outputs': utils.json_formatter,
-            #    'links': utils.link_formatter
-            #}
-            #utils.print_dict(stack.to_dict(), formatters=formatters)
+
 
 
     def get_stack_id(self):
