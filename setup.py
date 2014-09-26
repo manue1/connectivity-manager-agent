@@ -13,5 +13,5 @@ setup(
   license='',
   author='mpa',
   author_email='',
-  description='Setuptool for Nubomedia',
+  description='Nubomedia',
 )

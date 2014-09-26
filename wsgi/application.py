@@ -32,14 +32,21 @@ orchestrators = {}
 @hook('after_request')
 def enable_cors():
     response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+
 
 @route('/stacks', method = 'OPTIONS')
 def deploy():
-    return HTTPResponse(status=200, body="OK")
+    response.body = "OK"
+    response.status = 200
+    return response
 
 @route('/stacks/<stack_id>', method = 'OPTIONS')
 def deploy(stack_id):
-    return HTTPResponse(status=200, body="OK")
+    response.body = "OK"
+    response.status = 200
+    return response
 
 @route('/stacks', method = "GET")
 def list():
