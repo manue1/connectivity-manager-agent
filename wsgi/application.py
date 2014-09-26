@@ -14,10 +14,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-USERNAME = 'nubomedia'
-PASSWORD = 'nub0m3d1@'
-
-
 from core.orchestrator import ServiceOrchestrator
 from util.KeystoneManager import KeystoneManager
 from bottle import hook, route, run, request, response, HTTPResponse
@@ -25,6 +21,9 @@ from bottle import hook, route, run, request, response, HTTPResponse
 #import json
 import util.utils as utils
 import os
+
+#USER_FILE = '/net/u/mpa/user.cfg'
+USER_FILE = '/etc/nubomedia/user.cfg'
 
 orchestrators = {}
 
@@ -76,8 +75,8 @@ def show(stack_id):
 @route('/stacks', method = 'POST')
 def deploy():
     config = request.body.getvalue()
-
-    keystoneManager = KeystoneManager(username=USERNAME, password=PASSWORD)
+    username, password = utils.get_username_and_password(USER_FILE)
+    keystoneManager = KeystoneManager(username=username, password=password)
 
     endpoint = keystoneManager.get_endpoint(service_type='orchestration')
     print "endpoint: %s" % endpoint
@@ -107,33 +106,11 @@ def deploy():
     response.body = utils.dict_to_json({"stack":stack})
     response.status = 200
     response.content_type = 'application/json'
-
-    #print "orch: %s" % orchestrator
-    #print "response: %s" % response
-    #print "response body: %s" % response.body
-
     return response
 
 
 @route('/stacks/<stack_id>', method = "DELETE")
 def dispose(stack_id):
-    #cookie = request.get_header("set-cookie")
-    #print "session cookie: %s" % cookie
-
-    #cookie_key = None
-    #cookie_value = None
-
-    #try:
-    #    cookie_key = cookie.split("=")[0]
-    #    cookie_value = cookie.split("=")[1]
-    #except:
-    #    print "no cookie"
-
-    #if cookie_key == "session" and cookie_value:
-    #    orchestrator = orchestrators.get(cookie_value)
-    #    orchestrator.so_d.dispose()
-    #    del orchestrators[cookie_value]
-    #    print "stack dispose"
     orchestrator = orchestrators.get(stack_id)
     if orchestrator is not None:
         status = orchestrator.so_d.dispose()
@@ -154,6 +131,10 @@ def dispose(stack_id):
 
 
 if __name__ == '__main__':
-    run(host='0.0.0.0', port=8080, debug=True)
+    if os.path.isfile(USER_FILE):
+        run(host='0.0.0.0', port=8080, debug=True)
+    else:
+        print 'The user file "%s" does not exists. Please run "./emm.sh init" or set it manually.' % USER_FILE
+        exit(1)
 
 
