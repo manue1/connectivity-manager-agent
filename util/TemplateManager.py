@@ -31,8 +31,9 @@ def substitute_template(config_file, template_file = None):
     config = json.loads(config_file)
 
     name = config['nubomedia']['name']
-
+    print name
     key_name = config['nubomedia']['key_name']
+    print key_name
     template['resources']['connector']['properties']['key_name'] = str(key_name)
     template['resources']['broker']['properties']['key_name'] = str(key_name)
     template['resources']['msg_launch_configuration']['properties']['KeyName'] = str(key_name)

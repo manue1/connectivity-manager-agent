@@ -20,6 +20,7 @@ __author__ = 'mpa'
 
 from keystoneclient.client import Client as keystoneClient
 from novaclient.client import Client
+import util.utils as utils
 
 AUTH_URL= 'http://80.96.122.48:5000/v3'
 
@@ -129,7 +130,8 @@ class NovaManager(object):
 
 
 if __name__ == '__main__':
-    keystoneManager = KeystoneManager(username="nubomedia", password="nub0m3d1@")
+    username, password = utils.get_username_and_password("/net/u/mpa/user.cfg")
+    keystoneManager = KeystoneManager(username=username, password=password)
 
     endpoint = keystoneManager.get_endpoint(service_type='compute')
     #endpoint = "http://80.96.122.48:8774/v2"

@@ -17,7 +17,7 @@ __author__ = 'mpa'
 
 from keystoneclient.v3 import client as keystoneClient
 
-AUTH_URL= 'http://80.96.122.48:5000/v3'
+AUTH_URL= 'http://80.96.122.48:5000/v2.0'
 
 class KeystoneManager(object):
 
@@ -45,6 +45,7 @@ class KeystoneManager(object):
             kc_args['password'] = kwargs.get('password')
 
         self.ksclient = keystoneClient.Client(**kc_args)
+        self.auth_url = kc_args.get('auth_url')
         self.token = self.ksclient.auth_token
         self.tenant_id = self.ksclient.project_id
         self.tenant_name = self.ksclient.tenant_name
@@ -94,5 +95,11 @@ class KeystoneManager(object):
         if self.project_id is None:
             self.project_id = self.ksclient.project_id
         return self.project_id
+
+    def get_auth_url(self):
+        if self.auth_url is None:
+            self.auth_url = AUTH_URL
+        return self.auth_url
+
 
 

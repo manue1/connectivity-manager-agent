@@ -17,6 +17,7 @@ __author__ = 'mpa'
 
 from ceilometerclient import client
 from KeystoneManager import KeystoneManager
+import utils
 
 AUTH_URL= 'http://80.96.122.48:5000/v2.0'
 
@@ -44,7 +45,8 @@ class CeilometerManager(object):
         return self.ceiloClient.resources.get(resource_id)
 
 if __name__ == '__main__':
-    keystoneManager = KeystoneManager(version=2, username="nubomedia", password="nub0m3d1@", interface='public')
+    username, password = utils.get_username_and_password()
+    keystoneManager = KeystoneManager(version=2, username=username, password=password, interface='public')
 
     endpoint = keystoneManager.get_endpoint(service_type='compute')
     #endpoint = "http://80.96.122.48:8774/v2/fba35e226f4441c6b3b8bbd276f5d41a"

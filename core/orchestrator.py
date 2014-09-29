@@ -20,9 +20,6 @@ from util.HeatManager import HeatManager
 import json
 from core.manager import TopologyManger
 
-HERE = '/net/u/mpa'
-
-
 class SoExecution(object):
     """
     classdocs
@@ -80,7 +77,7 @@ class SoExecution(object):
         if self.stack_id is not None:
             self.heatManager.delete(self.stack_id)
             #self.stack_id = None
-        return self.stack_id
+        return None
 
 
     def state(self):

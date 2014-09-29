@@ -19,31 +19,17 @@ from KeystoneManager import KeystoneManager
 from keystoneclient.auth.identity import v2
 from keystoneclient import session
 from novaclient.client import Client
+import utils
 
 AUTH_URL= 'http://80.96.122.48:5000/v2.0'
 
 class NovaManager(object):
 
-    def __init__(self, endpoint, **kwargs):
+    def __init__(self, username, password, project_id, auth_url):
 
-        kc_args={}
-        if kwargs.get('tenant_id'):
-            kc_args['tenant_id'] = kwargs.get('tenant_id')
-        else:
-            kc_args['tenant_name'] = kwargs.get('tenant_name')
-        if kwargs.get('token'):
-            token = kwargs.get('token')
-        #else:
-            username = kwargs.get('username')
-            password = kwargs.get('password')
-            project_id = kwargs.get('project_id')
-
-        auth = v2.Password(auth_url=AUTH_URL, username=username, password=password, tenant_name=project_id)
-        sess = session.Session(auth=auth)
-
-        self.novaClient =Client(version=3, session=sess)
-        #self.novaClient = Client(version=3, username=username, password=password, auth_url = AUTH_URL)
-        #self.novaClient = Client(version=3, auth_token = token, auth_url = AUTH_URL,)
+        username, password = utils.get_username_and_password()
+        self.novaClient = Client("2",username,password,"nubomedia","http://80.96.122.48:5000/v2.0")
+        #self.novaClient = Client(2,username,password,project_id,auth_url)
         #self.novaClient.authenticate()
 
     def show_resource(self, stack_id=None, resource=None):
@@ -53,27 +39,19 @@ class NovaManager(object):
 
 
 if __name__ == '__main__':
-    keystoneManager = KeystoneManager(username="nubomedia", password="nub0m3d1@", interface='public')
+    username, password = utils.get_username_and_password()
+    keystoneManager = KeystoneManager(username=username, password=password)
 
-    endpoint = keystoneManager.get_endpoint(service_type='compute')
-    #endpoint = "http://80.96.122.48:8774/v2/fba35e226f4441c6b3b8bbd276f5d41a"
-    print "endpoint: %s" % endpoint
-
-    kwargs = {}
-    kwargs['username'] = keystoneManager.get_username()
-    print "username: %s" % kwargs.get('username')
-
-    kwargs['password'] = keystoneManager.get_password()
-    print "password: %s" % kwargs.get('password')
-
-    kwargs['token'] = keystoneManager.get_token()
-    print "token: %s" % kwargs.get('token')
-
-    project_id = keystoneManager.get_tenant_name()
-    kwargs['project_id'] = project_id
+    username = keystoneManager.get_username()
+    password = keystoneManager.get_password()
+    project_id = keystoneManager.get_project_id()
+    #auth_url = keystoneManager.get_auth_url()
+    endpoint = keystoneManager.get_auth_url()
+    print username
+    print password
     print project_id
+    print endpoint
 
-    novaClient = NovaManager(endpoint=endpoint, **kwargs)
-
+    novaClient = NovaManager(username, password, project_id, endpoint)
 
     print novaClient.show_resource()

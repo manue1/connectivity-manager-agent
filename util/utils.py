@@ -17,6 +17,7 @@ __author__ = 'mpa'
 
 import prettytable
 import json
+import os
 
 def dict_to_table(data_dict, formatters={}):
     pt = prettytable.PrettyTable(['Property', 'Value'],
@@ -34,9 +35,17 @@ def dict_to_json(data_dict):
     data_json = json.dumps(data_dict)
     return data_json
 
+def get_username_and_password(file):
+    lines = open(file).readlines()
+    username = ""
+    password = ""
+    for line in lines:
+        parts = line.split("=")
+        if parts[0] == "username":
+            username = parts[1].strip()
+        if parts[0] == "password":
+            password = parts[1].strip()
+    return username, password
+
 if __name__ == '__main__':
-    stacks_dict = {"stack_id":["1234","5678"], "stack_names":["test1","test2"]}
-    print stacks_dict.keys()
-    print dict_to_table(stacks_dict)
-    stack_json = dict_to_json(stacks_dict)
-    print stack_json
+    print get_username_and_password("/net/u/mpa/user.cfg")
