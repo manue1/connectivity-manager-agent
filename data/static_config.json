@@ -1,8 +1,8 @@
 {
     "nubomedia": {
         "user": { 
-            "username": "nubomedia",
-            "password":"nub0m3d1@" 
+            "username": "username",
+            "password":"password"
         },
         "networks": {
             "public_net": "2e2bc7f9-c29c-467c-94b6-5ef3724d79ac",

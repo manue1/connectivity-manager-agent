@@ -39,6 +39,7 @@ class NovaManager(object):
 
 
 if __name__ == '__main__':
+
     username, password = utils.get_username_and_password()
     keystoneManager = KeystoneManager(username=username, password=password)
 
@@ -49,6 +50,22 @@ if __name__ == '__main__':
     endpoint = keystoneManager.get_auth_url()
     print username
     print password
+
+    endpoint = keystoneManager.get_endpoint(service_type='compute')
+    print "endpoint: %s" % endpoint
+
+    kwargs = {}
+    kwargs['username'] = keystoneManager.get_username()
+    print "username: %s" % kwargs.get('username')
+
+    kwargs['password'] = keystoneManager.get_password()
+    print "password: %s" % kwargs.get('password')
+
+    kwargs['token'] = keystoneManager.get_token()
+    print "token: %s" % kwargs.get('token')
+
+    project_id = keystoneManager.get_tenant_name()
+
     print project_id
     print endpoint
 

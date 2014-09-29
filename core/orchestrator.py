@@ -20,6 +20,12 @@ from util.HeatManager import HeatManager
 import json
 from core.manager import TopologyManger
 
+<<<<<<< HEAD
+=======
+HERE = '.'
+
+
+>>>>>>> 174f0fbef775723fa2635359a7505f32696ba62e
 class SoExecution(object):
     """
     classdocs
@@ -33,7 +39,6 @@ class SoExecution(object):
         self.name = None
         self.resources = {}
         self.config = {}
-        # make sure we can talk to deployer...
         #self.heatManager = HeatManager(heat_url, **kc_args)
         self.heatManager = HeatManager(endpoint=endpoint, **kwargs)
 

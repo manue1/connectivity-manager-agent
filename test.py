@@ -12,7 +12,7 @@ import json
 
 if __name__ == '__main__':
 
-    keystoneManager = KeystoneManager(username='nubomedia', password='nub0m3d1@')
+    keystoneManager = KeystoneManager(username='username', password='password')
 
     kwargs = {}
 
@@ -36,7 +36,6 @@ if __name__ == '__main__':
     print "tenant_id: %s" % tenant_id
     print "tenant_name: %s" %  tenant_name
 
-    #heatClient = client.Client("1", endpoint=endpoint, token = token, username = "nubomedia", password = "nub0m3d1@")
     #heatClient = client.Client("1", endpoint=endpoint, token = token)
 
 

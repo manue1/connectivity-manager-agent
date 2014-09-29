@@ -130,6 +130,7 @@ class NovaManager(object):
 
 
 if __name__ == '__main__':
+
     username, password = utils.get_username_and_password("/net/u/mpa/user.cfg")
     keystoneManager = KeystoneManager(username=username, password=password)
 
