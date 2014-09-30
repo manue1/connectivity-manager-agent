@@ -19,8 +19,8 @@ import yaml
 import json
 import os
 
-TEMPLATE_PATH = '/etc/nubomedia/nubo_templ.yaml'
-#TEMPLATE_PATH = '/net/u/mpa/templates/nubo_templ.yaml'
+#TEMPLATE_PATH = '/etc/nubomedia/nubo_templ.yaml'
+TEMPLATE_PATH = '/net/u/mpa/templates/nubo_templ.yaml'
 
 
 def substitute_template(config_file, template_file = None):

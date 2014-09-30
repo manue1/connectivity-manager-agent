@@ -19,13 +19,9 @@ import util.TemplateManager as TemplateManager
 from util.HeatManager import HeatManager
 import json
 from core.manager import TopologyManger
-
-<<<<<<< HEAD
-=======
-HERE = '.'
+from core.config import Config
 
 
->>>>>>> 174f0fbef775723fa2635359a7505f32696ba62e
 class SoExecution(object):
     """
     classdocs
@@ -55,8 +51,10 @@ class SoExecution(object):
         Deploy method
         """
         if kwargs.get('config_file'):
-            self.config = json.loads(kwargs.get('config_file'))
-            self.name, template = TemplateManager.substitute_template(config_file=kwargs.get('config_file'))
+            user_config = kwargs.get('config_file')
+            self.config = Config(user_config)
+            name = self.config.get_stack_name()
+            template = self.config.get_template()
             parameters = None
         elif kwargs.get('parameters'):
             template = self.template
@@ -64,7 +62,7 @@ class SoExecution(object):
             template = self.template
 
         if self.stack_id is None:
-            self.stack_id = self.heatManager.deploy(name=self.name, template=template, parameters=parameters)
+            self.stack_id = self.heatManager.deploy(name=name, template=template, parameters=parameters)
         return self.stack_id
 
 

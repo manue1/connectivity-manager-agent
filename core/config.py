@@ -1,14 +1,25 @@
-#!/usr/bin/python
+# Copyright 2014 Technische Universitaet Berlin
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+__author__ = 'mpa'
 
 import os
 import json
 import yaml
-import utils
-from yaml.representer import SafeRepresenter
-__author__ = 'mpa'
+import util.utils as utils
 
-#STATIC_CONFIG_PATH = '../data/static_config.json'
-STATIC_CONFIG_PATH = '/etc/nubomedia/static_config.json'
+STATIC_CONFIG_PATH = '../data/static_config.json'
 
 class Config(object):
     def __init__(self, user_config_file):
@@ -476,17 +487,3 @@ class Alarm(object):
         alarm_config['properties'] = properties
         resource[self.name] = alarm_config
         return resource
-
-if __name__ == '__main__':
-    template_file = open(os.path.join(os.path.dirname(__file__), '/net/u/mpa/templates/nubo_templ.yaml')).read()
-    config_file = open(os.path.join(os.path.dirname(__file__), '/net/u/mpa/nubomedia.json')).read()
-
-    template = yaml.load(template_file, Loader=yaml.Loader)
-    user_config = json.loads(config_file)
-
-
-
-    print json.dumps(template['resources']['connector']['properties']['user_data'])
-    config = Config(config_file)
-    #print config.get_template()['resources']['connector']['properties']['user_data']
-    print config.get_template()

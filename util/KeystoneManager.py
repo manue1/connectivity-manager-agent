@@ -16,8 +16,10 @@
 __author__ = 'mpa'
 
 from keystoneclient.v3 import client as keystoneClient
+import utils
 
-AUTH_URL= 'http://80.96.122.48:5000/v2.0'
+#AUTH_URL= 'http://80.96.122.48:5000/v2.0'
+AUTH_URL= 'http://80.96.122.48:5000/v3'
 
 class KeystoneManager(object):
 
@@ -32,6 +34,7 @@ class KeystoneManager(object):
         """
 
         kc_args = {'auth_url': kwargs.get('auth_url') or AUTH_URL,
+                'version': 'v3',
                 'insecure': kwargs.get('insecure'),
                 'cacert': kwargs.get('cacert')}
         if kwargs.get('tenant_id'):
@@ -44,8 +47,8 @@ class KeystoneManager(object):
             kc_args['username'] = kwargs.get('username')
             kc_args['password'] = kwargs.get('password')
 
+
         self.ksclient = keystoneClient.Client(**kc_args)
-        self.auth_url = kc_args.get('auth_url')
         self.token = self.ksclient.auth_token
         self.tenant_id = self.ksclient.project_id
         self.tenant_name = self.ksclient.tenant_name
@@ -101,5 +104,15 @@ class KeystoneManager(object):
             self.auth_url = AUTH_URL
         return self.auth_url
 
+
+if __name__ == '__main__':
+    username, password = utils.get_username_and_password('/net/u/mpa/user.cfg')
+    kwargs = {}
+    kwargs['username'] = username
+    kwargs['password'] = password
+
+    km = KeystoneManager(**kwargs)
+    print km.get_token()
+    print km.get_endpoint()
 
 

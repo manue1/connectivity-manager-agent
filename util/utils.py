@@ -52,6 +52,13 @@ def get_username_and_password(file):
             password = parts[1].strip()
     return username, password
 
+
+class literal_unicode(unicode): pass
+
+def literal_unicode_representer(dumper, data):
+    return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
+
+
 if __name__ == '__main__':
 
     print get_username_and_password("/net/u/mpa/user.cfg")

@@ -83,10 +83,13 @@ def show(stack_id):
 def deploy():
     config = request.body.getvalue()
     username, password = utils.get_username_and_password(USER_FILE)
+    print username, password
     keystoneManager = KeystoneManager(username=username, password=password)
 
     endpoint = keystoneManager.get_endpoint(service_type='orchestration')
     print "endpoint: %s" % endpoint
+
+    #endpoint = 'http://80.96.122.48:5000/v2.0'
 
     kwargs = {}
     kwargs['username'] = keystoneManager.get_username()

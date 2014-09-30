@@ -14,7 +14,7 @@
 #    under the License.
 
 __author__ = 'gca'
-
+import config
 
 class TopologyManger(object):
     def __init__(self, stack, config, resources):
@@ -22,8 +22,8 @@ class TopologyManger(object):
         self.connector = {}
         self.connector['name'] = 'connector'
         self.connector['image'] = 'kurento-connector'
-        self.connector['flavor'] = config['nubomedia']['connector']['flavor']
-        self.connector['key_name'] = config['nubomedia']['key_name']
+        self.connector['flavor'] = config.connector.flavor
+        self.connector['key_name'] = config.connector.key_name
         if resources.get('connector'):
             self.connector['status'] = resources['connector']['resource_status']
         else:
@@ -32,8 +32,8 @@ class TopologyManger(object):
         self.broker = {}
         self.broker['name'] = 'broker'
         self.broker['image'] = 'kurento-broker'
-        self.broker['flavor'] = config['nubomedia']['broker']['flavor']
-        self.broker['key_name'] = config['nubomedia']['key_name']
+        self.broker['flavor'] = config.broker.flavor
+        self.broker['key_name'] = config.broker.key_name
         if resources.get('broker'):
             self.broker['status'] = resources['broker']['resource_status']
         else:
@@ -42,10 +42,10 @@ class TopologyManger(object):
         self.media_server_group = {}
         self.media_server_group['name'] = 'media_server_group'
         self.media_server_group['image'] = 'kurento-media-server'
-        self.media_server_group['flavor'] = config['nubomedia']['media_server_group']['flavor']
-        self.media_server_group['min_size'] = config['nubomedia']['media_server_group']['min_size']
-        self.media_server_group['max_size'] = config['nubomedia']['media_server_group']['max_size']
-        self.media_server_group['policies'] = config['nubomedia']['media_server_group']['policies']
+        self.media_server_group['flavor'] = config.media_server_group.launch_config.flavor
+        self.media_server_group['min_size'] = config.media_server_group.min_size
+        self.media_server_group['max_size'] = config.media_server_group.max_size
+        self.media_server_group['policies'] = config.media_server_group.policies
         if resources.get('media_server_group'):
             self.media_server_group['status'] = resources['media_server_group']['resource_status']
         else:
