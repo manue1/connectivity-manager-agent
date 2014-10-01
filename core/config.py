@@ -19,7 +19,8 @@ import json
 import yaml
 import util.utils as utils
 
-STATIC_CONFIG_PATH = '../data/static_config.json'
+#STATIC_CONFIG_PATH = '../data/static_config.json'
+STATIC_CONFIG_PATH = '/etc/nubomedia/static_config.json'
 
 class Config(object):
     def __init__(self, user_config_file):
