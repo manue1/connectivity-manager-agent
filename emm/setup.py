@@ -7,6 +7,8 @@ setup(
     packages=['core', 'test', 'util', 'wsgi', 'model'],
     install_requires=[
         'python-heatclient',
+        'python-novaclient',
+        'python-ceilometerclient',
         'bottle',
     ],
     url='',
