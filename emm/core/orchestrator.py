@@ -16,13 +16,13 @@
 
 __author__ = 'giuseppe'
 
-from emm.core.config import Config as Config
-import emm.model.entities as entities
-import emm.util.nova as nova
-import emm.util.ceilometer as ceilometer
-import emm.util.keystone as keystone
-import emm.util.heat as heat
-import emm.util.utils as utils
+from core.config import Config as Config
+import model.entities as entities
+import util.nova as nova
+import util.ceilometer as ceilometer
+import util.keystone as keystone
+import util.heat as heat
+import util.utils as utils
 
 AUTH_URL_KEYSTONE = 'http://80.96.122.48:5000/v3'
 AUTH_URL = 'http://80.96.122.48:5000/v2.0'

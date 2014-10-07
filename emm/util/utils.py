@@ -16,9 +16,7 @@
 __author__ = 'mpa'
 
 import json
-
 import prettytable
-
 
 def filter_dict(data_dict, properties=[]):
     new_dict = {}

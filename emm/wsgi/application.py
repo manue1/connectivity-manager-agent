@@ -14,14 +14,14 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from emm.core.orchestrator import ServiceOrchestrator
+from core.orchestrator import ServiceOrchestrator
 
-from emm.util import utils as utils
+from util import utils as utils
 import os
 from bottle import hook, route, run, request, response
 
-USER_FILE = '/net/u/mpa/user.cfg'
-#USER_FILE = '/etc/nubomedia/user.cfg'
+#USER_FILE = '/net/u/mpa/user.cfg'
+USER_FILE = '/etc/nubomedia/user.cfg'
 
 orchestrators = {}
 

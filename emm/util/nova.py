@@ -13,8 +13,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from emm.util import utils
-
 __author__ = 'mpa'
 from novaclient.v1_1.client import Client as novaclient
 

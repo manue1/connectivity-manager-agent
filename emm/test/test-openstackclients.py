@@ -3,7 +3,7 @@ from keystoneclient.v3.client import Client as ksclient
 from novaclient.v1_1.client import Client as novaclient
 from ceilometerclient import client as cmclient
 
-from emm.util import utils, heat
+from util import utils, heat
 
 
 

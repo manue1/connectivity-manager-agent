@@ -13,7 +13,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-from emm.util import utils
+import utils as utils
 
 __author__ = 'mpa'
 
@@ -70,18 +70,5 @@ class Client(object):
             service_type=kwargs.get('service_type') or 'orchestration',
             endpoint_type=kwargs.get('endpoint_type') or 'publicURL'))
 
-
-if __name__ == '__main__':
-    tenant_name, username, password = utils.get_credentials('/net/u/mpa/user.cfg')
-    kwargs = {}
-    kwargs['username'] = username
-    kwargs['password'] = password
-    kwargs['auth_url'] = AUTH_URL
-    kwargs['tenant_name'] = tenant_name
-
-    km = Client(**kwargs)
-    print km.get_token()
-    #print km.get_endpoint()
-    #print km.ksclient.endpoints.list()
 
 
