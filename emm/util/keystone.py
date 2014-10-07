@@ -2,7 +2,7 @@
 # Copyright 2014 Technische Universitaet Berlin
 # All Rights Reserved.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
@@ -13,16 +13,17 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from emm.util import utils
+
 __author__ = 'mpa'
 
 from keystoneclient.v3 import client as keystoneClient
-import utils
+#from keystoneclient.v2_0 import client as keystoneClient
 
 #AUTH_URL= 'http://80.96.122.48:5000/v2.0'
-AUTH_URL= 'http://80.96.122.48:5000/v3'
+#AUTH_URL= 'http://80.96.122.48:5000/v3'
 
-class KeystoneManager(object):
-
+class Client(object):
     def __init__(self, **kwargs):
         """Get an endpoint and auth token from Keystone.
         :param username: name of user
@@ -33,10 +34,9 @@ class KeystoneManager(object):
         :param token: token to use instead of username/password
         """
 
-        kc_args = {'auth_url': kwargs.get('auth_url') or AUTH_URL,
-                'version': 'v3',
-                'insecure': kwargs.get('insecure'),
-                'cacert': kwargs.get('cacert')}
+        kc_args = {'auth_url': kwargs.get('auth_url'),
+                   'insecure': kwargs.get('insecure'),
+                   'cacert': kwargs.get('cacert')}
         if kwargs.get('tenant_id'):
             kc_args['tenant_id'] = kwargs.get('tenant_id')
         else:
@@ -47,7 +47,7 @@ class KeystoneManager(object):
             kc_args['username'] = kwargs.get('username')
             kc_args['password'] = kwargs.get('password')
 
-
+        #kc_args['endpoint']= AUTH_URL
         self.ksclient = keystoneClient.Client(**kc_args)
         self.token = self.ksclient.auth_token
         self.tenant_id = self.ksclient.project_id
@@ -58,7 +58,8 @@ class KeystoneManager(object):
 
     def get_endpoint(self, **kwargs):
         """Get an endpoint using the provided keystone client."""
-        #ksclient.endpoints.get('orchestration')
+        #print self.ksclient.endpoints.get('orchestration')
+        #print self.ksclient.endpoints.list()
         if kwargs.get('region_name'):
             return ''.join(self.ksclient.service_catalog.get_urls(
                 service_type=kwargs.get('service_type') or 'orchestration',
@@ -69,50 +70,18 @@ class KeystoneManager(object):
             service_type=kwargs.get('service_type') or 'orchestration',
             endpoint_type=kwargs.get('endpoint_type') or 'publicURL'))
 
-    def get_token(self):
-        if self.token is None:
-            self.token = self.ksclient.auth_token
-        return self.token
-
-    def get_tenant_id(self):
-        if self.tenant_id is None:
-            self.tenant_id = self.ksclient.project_id
-        return self.tenant_id
-
-    def get_tenant_name(self):
-        if self.tenant_name is None:
-            self.tenant_name = self.ksclient.tenant_name
-        return self.tenant_name
-
-    def get_username(self):
-        if self.username is None:
-            self.username = self.ksclient.username
-        return self.username
-
-    def get_password(self):
-        if self.password is None:
-            self.password = self.ksclient.password
-        return self.password
-
-    def get_project_id(self):
-        if self.project_id is None:
-            self.project_id = self.ksclient.project_id
-        return self.project_id
-
-    def get_auth_url(self):
-        if self.auth_url is None:
-            self.auth_url = AUTH_URL
-        return self.auth_url
-
 
 if __name__ == '__main__':
-    username, password = utils.get_username_and_password('/net/u/mpa/user.cfg')
+    tenant_name, username, password = utils.get_credentials('/net/u/mpa/user.cfg')
     kwargs = {}
     kwargs['username'] = username
     kwargs['password'] = password
+    kwargs['auth_url'] = AUTH_URL
+    kwargs['tenant_name'] = tenant_name
 
-    km = KeystoneManager(**kwargs)
+    km = Client(**kwargs)
     print km.get_token()
-    print km.get_endpoint()
+    #print km.get_endpoint()
+    #print km.ksclient.endpoints.list()
 
 

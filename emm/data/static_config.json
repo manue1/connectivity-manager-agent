@@ -1,13 +1,8 @@
 {
     "nubomedia": {
-        "networks": {
-            "public_net": "2e2bc7f9-c29c-467c-94b6-5ef3724d79ac",
-            "private_net": "fd704f1b-9238-4c2c-a0f5-4ffb4543e33a", 
-            "private_subnet": "ab4595bf-12d5-4e92-baa8-b5dfb3c1a31d"
-        },
         "connector": {
             "name": "connector",
-            "image": "kurento-connector",
+            "image": "nubomedia-control-server",
             "port_enable": true,
             "floating_ip_enable": true,
             "user_data": {
@@ -17,14 +12,14 @@
         },
         "broker": {
             "name": "broker",
-            "image": "kurento-broker",
+            "image": "nubomedia-broker",
             "port_enable": true,
             "floating_ip_enable": false,
             "user_data":{}
         },
         "media_server_group": {
             "name": "media_server_group",
-            "image": "kurento-media-server",
+            "image": "nubomedia-media-server",
             "policies": {
                 "alarm":{
                     "evaluation_periods": 1,

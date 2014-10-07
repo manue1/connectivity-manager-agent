@@ -1,8 +1,8 @@
 # Copyright 2014 Technische Universitaet Berlin
 # All Rights Reserved.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
 #
 #         http://www.apache.org/licenses/LICENSE-2.0
@@ -12,15 +12,17 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+from emm.util import utils as utils
+
 __author__ = 'mpa'
 
 import os
 import json
 import yaml
-import util.utils as utils
 
 #STATIC_CONFIG_PATH = '../data/static_config.json'
 STATIC_CONFIG_PATH = '/etc/nubomedia/static_config.json'
+
 
 class Config(object):
     def __init__(self, user_config_file):
@@ -30,9 +32,14 @@ class Config(object):
         ###Stack name###
         self.name = user_config['nubomedia']['name']
 
+        ###Networks###
+        self.private_net = user_config['nubomedia']['networks']['private_net']
+        self.private_subnet = user_config['nubomedia']['networks']['private_subnet']
+        self.public_net = user_config['nubomedia']['networks']['public_net']
+
         ###Security Group###
         security_group_args = {}
-        security_group_args['name']= static_config['nubomedia']['security_group']['name']
+        security_group_args['name'] = static_config['nubomedia']['security_group']['name']
         rules_user = static_config['nubomedia']['security_group']['rules']
         rules = []
         for rule_user in rules_user:
@@ -55,9 +62,9 @@ class Config(object):
         connector_args['key_name'] = user_config['nubomedia']['key_name']
         connector_args['port_enable'] = static_config['nubomedia']['connector']['port_enable']
         connector_args['floating_ip_enable'] = static_config['nubomedia']['connector']['floating_ip_enable']
-        connector_args['private_net'] = static_config['nubomedia']['networks']['private_net']
-        connector_args['private_subnet'] = static_config['nubomedia']['networks']['private_subnet']
-        connector_args['public_net']= static_config['nubomedia']['networks']['public_net']
+        connector_args['private_net'] = self.private_net
+        connector_args['private_subnet'] = self.private_subnet
+        connector_args['public_net'] = self.public_net
         connector_args['security_groups'] = [self.security_group]
         connector_args['user_data'] = static_config['nubomedia']['connector']['user_data']
         self.connector = Server(**connector_args)
@@ -71,9 +78,9 @@ class Config(object):
         broker_args['key_name'] = user_config['nubomedia']['key_name']
         broker_args['port_enable'] = static_config['nubomedia']['broker']['port_enable']
         broker_args['floating_ip_enable'] = static_config['nubomedia']['broker']['floating_ip_enable']
-        broker_args['private_net'] = static_config['nubomedia']['networks']['private_net']
-        broker_args['private_subnet'] = static_config['nubomedia']['networks']['private_subnet']
-        broker_args['public_net']= static_config['nubomedia']['networks']['public_net']
+        broker_args['private_net'] = self.private_net
+        broker_args['private_subnet'] = self.private_subnet
+        broker_args['public_net'] = self.public_net
         broker_args['security_groups'] = [self.security_group]
         broker_args['user_data'] = static_config['nubomedia']['broker']['user_data']
         self.broker = Server(**broker_args)
@@ -108,8 +115,10 @@ class Config(object):
             alarm['threshold'] = policy_user['alarm']['threshold']
             alarm['statistic'] = policy_user['alarm']['statistic']
             alarm['period'] = policy_user['alarm']['period']
-            alarm['evaluation_periods'] = static_config['nubomedia']['media_server_group']['policies']['alarm']['evaluation_periods']
-            alarm['repeat_actions'] = static_config['nubomedia']['media_server_group']['policies']['alarm']['repeat_actions']
+            alarm['evaluation_periods'] = static_config['nubomedia']['media_server_group']['policies']['alarm'][
+                'evaluation_periods']
+            alarm['repeat_actions'] = static_config['nubomedia']['media_server_group']['policies']['alarm'][
+                'repeat_actions']
             policy['alarm'] = alarm
 
             policies.append(policy)
@@ -152,12 +161,9 @@ class Config(object):
         #return yaml.dump(template, allow_unicode=True, default_flow_style=False, encoding = False, default_style='')
         return yaml.dump(template)
 
-    def get_stack_name(self):
-        return self.name
 
 class Server(object):
     def __init__(self, **kwargs):
-        self.name = kwargs.get('name')
         self.type = "OS::Nova::Server"
 
         self.name = kwargs.get('name')
@@ -212,7 +218,6 @@ class Server(object):
             properties['user_data']['str_replace']['params'] = self.user_data['params']
             properties['user_data']['str_replace']['template'] = utils.literal_unicode(self.user_data['template'])
 
-
         server_config['properties'] = properties
         resources[self.name] = server_config
 
@@ -227,6 +232,7 @@ class Server(object):
             resources.update(floating_ip_config)
 
         return resources
+
 
 class Port(object):
     def __init__(self, **kwargs):
@@ -245,9 +251,9 @@ class Port(object):
         properties['network_id'] = self.network_id
         properties['fixed_ips'] = [{'subnet_id': self.fixed_ips}]
         if self.security_groups:
-            properties['security_groups']=[]
+            properties['security_groups'] = []
             for security_group in self.security_groups:
-                properties['security_groups'].append({'get_resource':security_group.name})
+                properties['security_groups'].append({'get_resource': security_group.name})
 
         port_config['properties'] = properties
         resource[self.name] = port_config
@@ -304,6 +310,7 @@ class SecurityGroup(object):
         resource[self.name] = security_group_config
         return resource
 
+
 class Rule(object):
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')
@@ -321,6 +328,7 @@ class Rule(object):
             rule_config['port_range_min'] = self.port_range_min
 
         return rule_config
+
 
 class AutoScalingGroup(object):
     def __init__(self, **kwargs):
@@ -378,8 +386,8 @@ class AutoScalingGroup(object):
         properties = {}
         properties['MinSize'] = self.min_size
         properties['MaxSize'] = self.max_size
-        properties['AvailabilityZones'] = [{'FN::GetAZs':''}]
-        properties['LaunchConfigurationName'] = { 'get_resource': self.launch_config.name }
+        properties['AvailabilityZones'] = [{'FN::GetAZs': ''}]
+        properties['LaunchConfigurationName'] = {'get_resource': self.launch_config.name}
 
         scaling_group_config['properties'] = properties
         resources[self.name] = scaling_group_config
@@ -410,15 +418,15 @@ class LaunchConfiguration(object):
         launch_config = {}
         launch_config['type'] = self.type
 
-        properties={}
+        properties = {}
         properties['ImageId'] = self.image
         properties['InstanceType'] = self.flavor
         properties['KeyName'] = self.key_name
 
         if self.security_groups:
-            properties['SecurityGroups']=[]
+            properties['SecurityGroups'] = []
             for security_group in self.security_groups:
-                properties['SecurityGroups'].append({'get_resource':security_group.name})
+                properties['SecurityGroups'].append({'get_resource': security_group.name})
 
         if self.user_data:
             properties['UserData'] = {}
@@ -447,13 +455,14 @@ class ScalingPolicy(object):
 
         properties = {}
         properties['AdjustmentType'] = self.adjustment_type
-        properties['AutoScalingGroupName'] = { 'get_resource': self.scaling_group.name }
+        properties['AutoScalingGroupName'] = {'get_resource': self.scaling_group.name}
         properties['Cooldown'] = self.cooldown
         properties['ScalingAdjustment'] = self.scaling_adjustment
 
         scaling_config['properties'] = properties
         resource[self.name] = scaling_config
         return resource
+
 
 class Alarm(object):
     def __init__(self, **kwargs):
@@ -482,9 +491,80 @@ class Alarm(object):
         properties['evaluation_periods'] = self.evaluation_periods
         properties['threshold'] = self.threshold
         properties['repeat_actions'] = self.repeat_actions
-        properties['alarm_actions'] = [{'get_attr':[self.policy.name, 'AlarmUrl']}]
-        properties['matching_metadata'] = {'metadata.user_metadata.groupname':{'get_resource':self.scaling_group.name}}
+        properties['alarm_actions'] = [{'get_attr': [self.policy.name, 'AlarmUrl']}]
+        properties['matching_metadata'] = {
+            'metadata.user_metadata.groupname': {'get_resource': self.scaling_group.name}}
 
         alarm_config['properties'] = properties
         resource[self.name] = alarm_config
         return resource
+
+
+###OLD: substitute template with a static template file
+
+TEMPLATE_PATH = '/etc/nubomedia/nubo_templ.yaml'
+#TEMPLATE_PATH = '/net/u/mpa/templates/nubo_templ.yaml'
+
+
+def substitute_template(config_file, template_file=None):
+    if template_file is None:
+        template_file = open(os.path.join(os.path.dirname(__file__), TEMPLATE_PATH)).read()
+
+    template = yaml.load(template_file, Loader=yaml.Loader)
+    config = json.loads(config_file)
+
+    name = config['nubomedia']['name']
+    print name
+    key_name = config['nubomedia']['key_name']
+    print key_name
+    template['resources']['connector']['properties']['key_name'] = str(key_name)
+    template['resources']['broker']['properties']['key_name'] = str(key_name)
+    template['resources']['msg_launch_configuration']['properties']['KeyName'] = str(key_name)
+
+    template['resources']['connector']['properties']['flavor'] = str(config['nubomedia']['connector']['flavor'])
+    template['resources']['broker']['properties']['flavor'] = str(config['nubomedia']['broker']['flavor'])
+
+    template['resources']['media_server_group']['properties']['MinSize'] = str(
+        config['nubomedia']['media_server_group']['min_size'])
+    template['resources']['media_server_group']['properties']['MaxSize'] = str(
+        config['nubomedia']['media_server_group']['max_size'])
+    template['resources']['msg_launch_configuration']['properties']['InstanceType'] = str(
+        config['nubomedia']['media_server_group']['flavor'])
+
+    template['resources']['msg_scaleup_alarm']['properties']['meter_name'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['alarm']['meter_name'])
+    template['resources']['msg_scaleup_alarm']['properties']['comparison_operator'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['alarm']['comparison_operator'])
+    template['resources']['msg_scaleup_alarm']['properties']['threshold'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['alarm']['threshold'])
+    template['resources']['msg_scaleup_alarm']['properties']['statistic'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['alarm']['statistic'])
+    template['resources']['msg_scaleup_alarm']['properties']['period'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['alarm']['period'])
+    template['resources']['msg_scaleup_policy']['properties']['AdjustmentType'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['action']['adjustment_type'])
+    template['resources']['msg_scaleup_policy']['properties']['ScalingAdjustment'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['action']['scaling_adjustment'])
+    template['resources']['msg_scaleup_policy']['properties']['Cooldown'] = str(
+        config['nubomedia']['media_server_group']['policies'][0]['action']['cooldown'])
+
+    template['resources']['msg_scaledown_alarm']['properties']['meter_name'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['alarm']['meter_name'])
+    template['resources']['msg_scaledown_alarm']['properties']['comparison_operator'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['alarm']['comparison_operator'])
+    template['resources']['msg_scaledown_alarm']['properties']['threshold'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['alarm']['threshold'])
+    template['resources']['msg_scaledown_alarm']['properties']['statistic'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['alarm']['statistic'])
+    template['resources']['msg_scaledown_alarm']['properties']['period'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['alarm']['period'])
+    template['resources']['msg_scaledown_policy']['properties']['AdjustmentType'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['action']['adjustment_type'])
+    template['resources']['msg_scaledown_policy']['properties']['ScalingAdjustment'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['action']['scaling_adjustment'])
+    template['resources']['msg_scaledown_policy']['properties']['Cooldown'] = str(
+        config['nubomedia']['media_server_group']['policies'][1]['action']['cooldown'])
+
+    template_file = yaml.dump(template)
+
+    return name, template_file
