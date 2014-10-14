@@ -178,8 +178,8 @@ class ScalingGroup(object):
         properties = ['stack_name', 'creation_time', 'stack_status', 'id']
         scaling_group_information = {}
         scaling_group_information.update(utils.filter_dict(data_dict=stack_information, properties=properties))
-        scaling_group_information['resources'] = {}
+        scaling_group_information['resources'] = []
         for instance in self.instances:
             if instance.resource_id is not None:
-                scaling_group_information['resources'][instance.resource_id] = instance.show_runtime_information()
+                scaling_group_information['resources'].append(instance.show_runtime_information())
         return scaling_group_information
