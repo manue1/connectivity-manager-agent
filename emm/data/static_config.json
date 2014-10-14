@@ -1,13 +1,13 @@
 {
     "nubomedia": {
         "connector": {
-            "name": "connector",
+            "name": "control-server",
             "image": "nubomedia-control-server",
             "port_enable": true,
             "floating_ip_enable": true,
             "user_data": {
                 "template":  
-                    "#!/bin/bash -v\nsudo sed -i \"s/^\\(kmf.transport[ \\t]*\\)=thrift/\\1 = rabbitmq/\" /etc/kurento/media-connector.properties\nsudo sed -i \"\\$arabbitmq.address=$BROKER_IP:5672\" /etc/kurento/media-connector.properties\nsudo service kmf-media-connector restart",
+                    "#!/bin/bash -v\nsudo sed -i \"s/^\\([ \\t]*\\\"address\\\"[ \\t]*\\):[ \\t]\\\"*[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]\\\"*.*$/\\1: \\\"$BROKER_IP\\\"/\" /etc/kurento/kurento.conf.json",
                 "params":{"$BROKER_IP": {"get_attr": ["broker", "first_address"]}}}
         },
         "broker": {
@@ -28,7 +28,7 @@
             },
             "user_data": {
                 "template": 
-                    "#!/bin/bash -v\nsudo sed -i \"s/^\\(serverAddress[ \\t]*\\)=[ \\t]*[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*.*$/\\1 = $BROKER_IP/\" /etc/kurento/kurento.conf",
+                    "#!/bin/bash -v\nsudo sed -i \"s/^\\([ \\t]*\\\"address\\\"[ \\t]*\\):[ \\t]\\\"*[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]\\\"*.*$/\\1: \\\"$BROKER_IP\\\"/\" /etc/kurento/kurento.conf.json",
                 "params": {
                     "$BROKER_IP": {"get_attr": ["broker", "first_address"] }
                 }
