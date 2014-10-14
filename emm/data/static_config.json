@@ -1,7 +1,7 @@
 {
     "nubomedia": {
         "connector": {
-            "name": "control-server",
+            "name": "control_server",
             "image": "nubomedia-control-server",
             "port_enable": true,
             "floating_ip_enable": true,
