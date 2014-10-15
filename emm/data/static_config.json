@@ -7,7 +7,7 @@
             "floating_ip_enable": true,
             "user_data": {
                 "template":  
-                    "#!/bin/bash -v\nsudo sed -i \"s/^\\([ \\t]*\\\"address\\\"[ \\t]*\\):[ \\t]\\\"*[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]\\\"*.*$/\\1: \\\"$BROKER_IP\\\"/\" /etc/kurento/kurento.conf.json",
+                    "#!/bin/bash -v \n sudo sed \"s/^\([ \t]*\"address\"[ \t]*\):[ \t]\"*[0-9]*\.[0-9]*\.[0-9]*\.[0-9]\"*.*$/\1: \"$BROKER_IP\"/\" /etc/kurento/kurento.conf.json \nsudo /etc/init.d/kurento-control-server restart \nnohup mvn -f /opt/kurento-tutorial-java/kurento-hello-world/pom.xml compile exec:java -Dserver.port=8081 & \n nohup mvn -f /opt/kurento-tutorial-java/kurento-magic-mirror/pom.xml compile exec:java -Dserver.port=8082 & \n nohup mvn -f /opt/kurento-tutorial-java/kurento-one2many-call/pom.xml compile exec:java -Dserver.port=8083 & \nnohup mvn -f /opt/kurento-tutorial-java/kurento-one2one-call/pom.xml compile exec:java -Dserver.port=8084 &",
                 "params":{"$BROKER_IP": {"get_attr": ["broker", "first_address"]}}}
         },
         "broker": {
@@ -20,6 +20,7 @@
         "media_server_group": {
             "name": "media_server_group",
             "image": "nubomedia-media-server",
+            "floating_ip_enable": true,
             "policies": {
                 "alarm":{
                     "evaluation_periods": 1,
@@ -28,7 +29,7 @@
             },
             "user_data": {
                 "template": 
-                    "#!/bin/bash -v\nsudo sed -i \"s/^\\([ \\t]*\\\"address\\\"[ \\t]*\\):[ \\t]\\\"*[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]\\\"*.*$/\\1: \\\"$BROKER_IP\\\"/\" /etc/kurento/kurento.conf.json",
+                    "#!/bin/bash -v\n cp /etc/kurento/kurento-broker.conf.json /etc/kurento/kurento.conf.json\nsudo sed -i \"s/^\\([ \\t]*\\\"address\\\"[ \\t]*\\):[ \\t]\\\"*[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]\\\"*.*$/\\1: \\\"$BROKER_IP\\\"/\" /etc/kurento/kurento.conf.json\nsudo /etc/init.d/kurento-media-server restart",
                 "params": {
                     "$BROKER_IP": {"get_attr": ["broker", "first_address"] }
                 }
@@ -46,8 +47,15 @@
                     "name": "rule_tcp",
                     "remote_ip_prefix": "0.0.0.0/0",
                     "protocol": "tcp",
-                    "port_range_max": "22",
-                    "port_range_min": "22"
+                    "port_range_max": "0",
+                    "port_range_min": "65536"
+                },
+                {
+                    "name": "rule_udp",
+                    "remote_ip_prefix": "0.0.0.0/0",
+                    "protocol": "udp",
+                    "port_range_max": "0",
+                    "port_range_min": "65536"
                 }
             ]
         }
