@@ -16,8 +16,8 @@ from util import utils as utils
 
 __author__ = 'mpa'
 
-#CONFIG_PATH = "/etc/nubomedia/"
-CONFIG_PATH = "/net/u/mpa/project/nubomedia/emm/data/"
+CONFIG_PATH = "/etc/nubomedia/"
+#CONFIG_PATH = "/net/u/mpa/project/nubomedia/emm/data/"
 STATIC_ENV_PATH= CONFIG_PATH + 'environment.yaml'
 
 class Stack(object):
