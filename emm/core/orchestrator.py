@@ -26,8 +26,9 @@ import util.utils as utils
 
 AUTH_URL_KEYSTONE = 'http://80.96.122.48:5000/v3'
 AUTH_URL = 'http://80.96.122.48:5000/v2.0'
-USER_PATH = '/etc/nubomedia/user.cfg'
-#USER_PATH = '/net/u/mpa/user.cfg'
+#CONFIG_PATH = "/net/u/mpa/"
+CONFIG_PATH = '/etc/nubomedia/'
+USER_PATH = CONFIG_PATH + 'user.cfg'
 
 class SoExecution(object):
     """

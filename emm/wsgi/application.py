@@ -20,9 +20,6 @@ from util import utils as utils
 import os
 from bottle import hook, route, run, request, response
 
-#USER_FILE = '/net/u/mpa/user.cfg'
-USER_FILE = '/etc/nubomedia/user.cfg'
-
 orchestrators = {}
 
 
@@ -114,10 +111,5 @@ def dispose(stack_id):
 
 
 if __name__ == '__main__':
-    if os.path.isfile(USER_FILE):
-        run(host='0.0.0.0', port=8080, debug=True)
-    else:
-        print 'The user file "%s" does not exists. Please run "./emm.sh init" or set it manually.' % USER_FILE
-        exit(1)
-
+    run(host='0.0.0.0', port=8080, debug=True)
 
