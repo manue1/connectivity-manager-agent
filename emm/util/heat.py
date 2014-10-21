@@ -138,6 +138,21 @@ class Client(object):
                 resource_ids.append(resource_id)
         return resource_ids
 
+    def list_nested_resource_ids(self, stack_id):
+        resources_raw = self.client.resources.list(stack_id)
+        resource_ids = []
+        for resource_raw in resources_raw:
+            resource_id = resource_raw.to_dict().get('physical_resource_id')
+            if resource_id:
+                nested_resources_raw = self.client.resources.list(resource_id)
+                for nested_resource_raw in nested_resources_raw:
+                    resource_type = nested_resource_raw.to_dict().get('resource_type')
+                    if resource_type == 'OS::Nova::Server':
+                        nested_resource_id = nested_resource_raw.to_dict().get('physical_resource_id')
+                        if nested_resource_id:
+                            resource_ids.append(nested_resource_id)
+        return resource_ids
+
     def get_resources(self, stack_id, resource_names=[]):
         resources = {}
         for resource_name in resource_names:
