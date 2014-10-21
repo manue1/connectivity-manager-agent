@@ -16,8 +16,8 @@ from util import utils as utils
 
 __author__ = 'mpa'
 
-CONFIG_PATH = "/etc/nubomedia/"
-#CONFIG_PATH = "/net/u/mpa/project/nubomedia/emm/data/"
+#CONFIG_PATH = "/etc/nubomedia/"
+CONFIG_PATH = "/net/u/mpa/project/nubomedia/emm/data/"
 STATIC_ENV_PATH= CONFIG_PATH + 'environment.yaml'
 
 class Stack(object):
@@ -140,7 +140,7 @@ class ScalingGroup(object):
             #get existing resource ids
             existing_resource_ids = self.list_existing_resource_ids()
             #get deployed resource ids from openstack
-            deployed_resource_ids = self.heatclient.list_resource_ids(stack_id=self.resource_id)
+            deployed_resource_ids = self.heatclient.list_nested_resource_ids(stack_id=self.resource_id)
             #find new resources
             for deployed_resource_id in deployed_resource_ids:
                 if deployed_resource_id not in existing_resource_ids:
