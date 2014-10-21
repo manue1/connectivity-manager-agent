@@ -20,8 +20,12 @@ import os
 import json
 import yaml
 
-#STATIC_CONFIG_PATH = '../data/static_config.json'
-STATIC_CONFIG_PATH = '/etc/nubomedia/static_config.json'
+CONFIG_PATH = '/etc/nubomedia/'
+#CONFIG_PATH = '/net/u/mpa/project/nubomedia/emm/data/'
+#STATIC_ENV_PATH = BASE_PATH + 'environment.yaml'
+#STATIC_MEDIA_SERVER_PATH = BASE_PATH + 'nubomedia_media_server.yaml'
+STATIC_CONFIG_PATH = CONFIG_PATH + 'static_config.json'
+
 
 
 class Config(object):
@@ -87,7 +91,8 @@ class Config(object):
 
         ###Media Server Group###
         media_server_group_args = {}
-        media_server_group_args['name'] = static_config['nubomedia']['media_server_group']['name']
+        media_server_group_args['group_name'] = static_config['nubomedia']['media_server_group']['group_name']
+        media_server_group_args['instance_name'] = static_config['nubomedia']['media_server_group']['instance_name']
         media_server_group_args['image'] = static_config['nubomedia']['media_server_group']['image']
         media_server_group_args['key_name'] = user_config['nubomedia']['key_name']
         media_server_group_args['flavor'] = user_config['nubomedia']['media_server_group']['flavor']
@@ -95,6 +100,10 @@ class Config(object):
         media_server_group_args['max_size'] = user_config['nubomedia']['media_server_group']['max_size']
         media_server_group_args['security_groups'] = [self.security_group]
         media_server_group_args['user_data'] = static_config['nubomedia']['media_server_group']['user_data']
+        media_server_group_args['private_net'] = self.private_net
+        media_server_group_args['private_subnet'] = self.private_subnet
+        media_server_group_args['public_net'] = self.public_net
+
 
         policies_user = user_config['nubomedia']['media_server_group']['policies']
         policies = []
@@ -125,7 +134,7 @@ class Config(object):
             i += 1
 
         media_server_group_args['policies'] = policies
-        self.media_server_group = AutoScalingGroup(**media_server_group_args)
+        self.media_server_group = Heat_AutoScalingGroup(**media_server_group_args)
 
     def get_template(self):
         resources = {}
@@ -147,9 +156,9 @@ class Config(object):
         outputs['connector_public_ip']['value'] = {'get_attr': [self.connector.floating_ip.name, 'floating_ip_address']}
         outputs['connector_public_ip']['description'] = 'Public IP of the connector'
 
-        outputs['media_server_group_ips'] = {}
-        outputs['media_server_group_ips']['value'] = {'get_attr': [self.media_server_group.name, 'InstanceList']}
-        outputs['media_server_group_ips']['description'] = 'Private IPs of the media server group'
+        #outputs['media_server_group_ips'] = {}
+        #outputs['media_server_group_ips']['value'] = {'get_attr': [self.media_server_group.name, 'InstanceList']}
+        #outputs['media_server_group_ips']['description'] = 'Private IPs of the media server group'
 
         template = {}
         template['heat_template_version'] = '2013-05-23'
@@ -159,6 +168,9 @@ class Config(object):
         yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
         yaml.add_representer(utils.literal_unicode, utils.literal_unicode_representer)
         #return yaml.dump(template, allow_unicode=True, default_flow_style=False, encoding = False, default_style='')
+
+        #f = open('/net/u/mpa/templ.yaml', 'w')
+        #f.write(yaml.dump(template))
         return yaml.dump(template)
 
 
@@ -329,10 +341,105 @@ class Rule(object):
 
         return rule_config
 
-
-class AutoScalingGroup(object):
+class Heat_AutoScalingGroup(object):
     def __init__(self, **kwargs):
-        self.name = kwargs.get('name')
+        self.name = kwargs.get('group_name')
+        self.type = 'OS::Heat::AutoScalingGroup'
+
+        self.instance_name = kwargs.get('instance_name')
+        self.min_size = kwargs.get('min_size')
+        self.max_size = kwargs.get('max_size')
+
+        self.image = kwargs.get('image')
+        self.flavor = kwargs.get('flavor')
+        self.key_name = kwargs.get('key_name')
+        self.security_groups = kwargs.get('security_groups')
+        self.user_data = kwargs.get('user_data')
+
+        self.private_net = kwargs.get('private_net')
+        self.private_subnet = kwargs.get('private_subnet')
+        self.public_net = kwargs.get('public_net')
+
+        self.policies = kwargs.get('policies')
+        self.alarms = []
+        self.actions = []
+
+        if self.policies:
+            for policy in self.policies:
+                policy_action = policy.get('action')
+                policy_args = {}
+                policy_args['name'] = '%s_policy' % policy.get('name')
+                policy_args['adjustment_type'] = policy_action.get('adjustment_type')
+                policy_args['scaling_adjustment'] = policy_action.get('scaling_adjustment')
+                policy_args['cooldown'] = policy_action.get('cooldown')
+                policy_args['scaling_group'] = self
+                action = ScalingPolicy(**policy_args)
+                self.actions.append(action)
+
+                policy_alarm = policy.get('alarm')
+                alarm_args = {}
+                alarm_args['name'] = '%s_alarm' % policy.get('name')
+                alarm_args['meter_name'] = policy_alarm.get('meter_name')
+                alarm_args['comparison_operator'] = policy_alarm.get('comparison_operator')
+                alarm_args['threshold'] = policy_alarm.get('threshold')
+                alarm_args['statistic'] = policy_alarm.get('statistic')
+                alarm_args['period'] = policy_alarm.get('period')
+                alarm_args['evaluation_periods'] = policy_alarm.get('evaluation_periods')
+                alarm_args['repeat_actions'] = policy_alarm.get('repeat_actions')
+                alarm_args['scaling_group'] = self
+                alarm_args['policy'] = action
+                alarm = Alarm(**alarm_args)
+                self.alarms.append(alarm)
+
+    def dump_to_dict(self):
+        resources = {}
+        scaling_group_config = {}
+        scaling_group_config['type'] = self.type
+
+        group_properties = {}
+        group_properties['min_size'] = self.min_size
+        group_properties['max_size'] = self.max_size
+
+        group_properties['resource'] = {}
+        group_properties['resource']['type'] = "Nubomedia::MediaServer"
+        #group_properties['resource']['type'] = "OS::Heat::Server"
+
+        resource_properties = {}
+        resource_properties['name'] = self.instance_name
+        resource_properties['image'] = self.image
+        resource_properties['flavor'] = self.flavor
+        resource_properties['key_name'] = self.key_name
+        resource_properties['metadata'] = {'metering_stack' : self.name}
+        if self.user_data:
+            resource_properties['user_data'] = {}
+            resource_properties['user_data']['str_replace'] = {}
+            resource_properties['user_data']['str_replace']['params'] = self.user_data['params']
+            resource_properties['user_data']['str_replace']['template'] = utils.literal_unicode(self.user_data['template'])
+        if self.security_groups:
+            resource_properties['security_groups'] = []
+            for security_group in self.security_groups:
+                resource_properties['security_groups'].append({'get_resource': security_group.name})
+        resource_properties['public_net'] = self.public_net
+        resource_properties['private_net'] = self.private_net
+        resource_properties['private_subnet'] = self.private_subnet
+
+        group_properties['resource']['properties'] = resource_properties
+
+        scaling_group_config['properties'] = group_properties
+
+        resources[self.name] = scaling_group_config
+
+        for alarm in self.alarms:
+            resources.update(alarm.dump_to_dict())
+        for action in self.actions:
+            resources.update(action.dump_to_dict())
+
+        return resources
+
+
+class AWS_AutoScalingGroup(object):
+    def __init__(self, **kwargs):
+        self.name = kwargs.get('group_name')
         self.type = 'AWS::AutoScaling::AutoScalingGroup'
         self.min_size = kwargs.get('min_size')
         self.max_size = kwargs.get('max_size')
@@ -492,8 +599,12 @@ class Alarm(object):
         properties['threshold'] = self.threshold
         properties['repeat_actions'] = self.repeat_actions
         properties['alarm_actions'] = [{'get_attr': [self.policy.name, 'AlarmUrl']}]
-        properties['matching_metadata'] = {
-            'metadata.user_metadata.groupname': {'get_resource': self.scaling_group.name}}
+        if self.scaling_group.type == 'OS::Heat::AutoScalingGroup':
+            properties['matching_metadata'] = {
+                'metadata.user_metadata.stack': self.scaling_group.name }
+        if self.scaling_group.type == 'AWS::AutoScaling::AutoScalingGroup':
+            properties['matching_metadata'] = {
+                'metadata.user_metadata.groupname': {'get_resource': self.scaling_group.name}}
 
         alarm_config['properties'] = properties
         resource[self.name] = alarm_config

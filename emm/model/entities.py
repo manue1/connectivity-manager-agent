@@ -16,6 +16,9 @@ from util import utils as utils
 
 __author__ = 'mpa'
 
+CONFIG_PATH = "/etc/nubomedia/"
+#CONFIG_PATH = "/net/u/mpa/project/nubomedia/emm/data/"
+STATIC_ENV_PATH= CONFIG_PATH + 'environment.yaml'
 
 class Stack(object):
     def __init__(self, clients, config):
@@ -36,8 +39,13 @@ class Stack(object):
 
 
     def deploy(self):
+        #get template
+        template = self.config.get_template()
+        #get environment
+        heatclient = self.clients.get('heatclient')
+        env, env_file = heatclient.get_environment_and_file(STATIC_ENV_PATH)
         #deploy a new stack and get the response with additional information
-        stack_information = self.heatclient.deploy(name=self.config.name, template=self.config.get_template())
+        stack_information = self.heatclient.deploy(name=self.config.name, template=template, environment=env, environment_file = env_file)
         #get stack id for the new stack
         self.stack_id = stack_information['stack']['id']
         return stack_information
@@ -165,9 +173,9 @@ class ScalingGroup(object):
         static_information['name'] = self.config.name
         static_information['min_size'] = self.config.min_size
         static_information['max_size'] = self.config.max_size
-        static_information['image'] = self.config.launch_config.image
-        static_information['flavor'] = self.config.launch_config.flavor
-        static_information['key_name'] = self.config.launch_config.key_name
+        static_information['image'] = self.config.image
+        static_information['flavor'] = self.config.flavor
+        static_information['key_name'] = self.config.key_name
         static_information['policies'] = self.config.policies
         return static_information
 

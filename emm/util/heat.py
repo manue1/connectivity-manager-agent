@@ -17,6 +17,7 @@ __author__ = 'mpa'
 
 from heatclient.v1 import client as heat
 from heatclient.common import utils
+from heatclient.common import template_utils
 import heatclient.exc as exc
 
 
@@ -37,17 +38,36 @@ class Client(object):
         self.client = heat.Client(endpoint=endpoint, **kc_args)
 
     def deploy(self, **kwargs):
+        #tpl_files, template = template_utils.get_template_contents(template_file='/net/u/mpa/templ.yaml')
+        #env_files, env = env_files, env = template_utils.process_environment_and_files(env_path='/net/u/mpa/project/templates/environment.yaml')
+
+        print "kwargs: %s" % kwargs
         kcargs = {
             'stack_name': kwargs.get('name'),
             'disable_rollback': not (bool(kwargs.get('enable_rollback'))),
             'parameters': utils.format_parameters(kwargs.get('parameters')),
-            'template': kwargs.get('template')
+            'template': kwargs.get('template'),
+            #'template': template,
+            #'files' : dict(list(tpl_files.items()) + list(env_files.items())),
+            'files' : dict(list(kwargs.get('environment_file').items())),
+            'environment' : kwargs.get('environment')
+            #'environment' : env
         }
 
+        import json
+        print json.dumps(kcargs, indent=2)
         timeout = kwargs.get('timeout') or kwargs.get('create_timeout')
         if timeout:
             kcargs['timeout_mins'] = timeout
-
+        #print kcargs
+        #import yaml
+        #import json
+        #print json.dumps(kcargs.get('template'), indent=2)
+        #print json.dumps(kcargs.get('environment'), indent=2)
+        #print yaml.dump(kcargs.get('template'))
+        #print yaml.dump(kcargs.get('environment'))
+        #print kcargs.get('template')
+        #print kcargs.get('environment')
         try:
             stack = self.client.stacks.create(**kcargs)
         except exc.HTTPNotFound:
@@ -127,3 +147,9 @@ class Client(object):
             except:
                 resources[resource_name] = None
         return resources
+
+    def get_environment_and_file(self, env_path):
+        env_files, env = template_utils.process_environment_and_files(env_path=env_path)
+        print "env: %s" % env
+        print "env files: %s" % env_files
+        return env, env_files
