@@ -144,7 +144,7 @@ class ScalingGroup(object):
             #find new resources
             for deployed_resource_id in deployed_resource_ids:
                 if deployed_resource_id not in existing_resource_ids:
-                    new_instance = Instance(clients=self.clients, config=self.config.media_server_group,
+                    new_instance = Instance(clients=self.clients, config=self.config,
                                             resource_id=deployed_resource_id)
                     self.instances.append(new_instance)
             #check that instances still exists
