@@ -41,23 +41,6 @@ class Config(object):
         self.private_subnet = user_config['nubomedia']['networks']['private_subnet']
         self.public_net = user_config['nubomedia']['networks']['public_net']
 
-        ###Security Group###
-        security_group_args = {}
-        security_group_args['name'] = static_config['nubomedia']['security_group']['name']
-        rules_user = static_config['nubomedia']['security_group']['rules']
-        rules = []
-        for rule_user in rules_user:
-            rule = {}
-            rule['name'] = rule_user['name']
-            rule['remote_ip_prefix'] = rule_user['remote_ip_prefix']
-            rule['protocol'] = rule_user['protocol']
-            rule['port_range_min'] = rule_user.get('port_range_min')
-            rule['port_range_max'] = rule_user.get('port_range_max')
-            rules.append(rule)
-
-        security_group_args['rules'] = rules
-        self.security_group = SecurityGroup(**security_group_args)
-
         ###Connector###
         connector_args = {}
         connector_args['name'] = static_config['nubomedia']['connector']['name']
@@ -69,10 +52,9 @@ class Config(object):
         connector_args['private_net'] = self.private_net
         connector_args['private_subnet'] = self.private_subnet
         connector_args['public_net'] = self.public_net
-        connector_args['security_groups'] = [self.security_group]
         connector_args['user_data'] = static_config['nubomedia']['connector']['user_data']
+        connector_args['security_group'] = static_config['nubomedia']['connector']['security_group']
         self.connector = Server(**connector_args)
-
 
         ###Broker###
         broker_args = {}
@@ -85,8 +67,8 @@ class Config(object):
         broker_args['private_net'] = self.private_net
         broker_args['private_subnet'] = self.private_subnet
         broker_args['public_net'] = self.public_net
-        broker_args['security_groups'] = [self.security_group]
         broker_args['user_data'] = static_config['nubomedia']['broker']['user_data']
+        broker_args['security_group'] = static_config['nubomedia']['broker']['security_group']
         self.broker = Server(**broker_args)
 
         ###Media Server Group###
@@ -98,8 +80,8 @@ class Config(object):
         media_server_group_args['flavor'] = user_config['nubomedia']['media_server_group']['flavor']
         media_server_group_args['min_size'] = user_config['nubomedia']['media_server_group']['min_size']
         media_server_group_args['max_size'] = user_config['nubomedia']['media_server_group']['max_size']
-        media_server_group_args['security_groups'] = [self.security_group]
         media_server_group_args['user_data'] = static_config['nubomedia']['media_server_group']['user_data']
+        media_server_group_args['security_group'] = static_config['nubomedia']['media_server_group']['security_group']
         media_server_group_args['private_net'] = self.private_net
         media_server_group_args['private_subnet'] = self.private_subnet
         media_server_group_args['public_net'] = self.public_net
@@ -138,7 +120,6 @@ class Config(object):
 
     def get_template(self):
         resources = {}
-        resources.update(self.security_group.dump_to_dict())
         resources.update(self.connector.dump_to_dict())
         resources.update(self.broker.dump_to_dict())
         resources.update(self.media_server_group.dump_to_dict())
@@ -176,35 +157,57 @@ class Config(object):
 
 class Server(object):
     def __init__(self, **kwargs):
+        ###Resource Type###
         self.type = "OS::Nova::Server"
 
+        ###Basic parameters###
         self.name = kwargs.get('name')
         self.image = kwargs.get('image')
         self.flavor = kwargs.get('flavor')
         self.key_name = kwargs.get('key_name')
 
+        ###Security Group###
+        security_group_config = kwargs.get('security_group')
+        security_group_args = {}
+        security_group_args['name'] = security_group_config.get('name')
+        rules_user = security_group_config.get('rules')
+        rules = []
+        for rule_user in rules_user:
+            rule = {}
+            rule['name'] = rule_user['name']
+            rule['remote_ip_prefix'] = rule_user['remote_ip_prefix']
+            rule['protocol'] = rule_user['protocol']
+            rule['port_range_min'] = rule_user.get('port_range_min')
+            rule['port_range_max'] = rule_user.get('port_range_max')
+            rules.append(rule)
+
+        security_group_args['rules'] = rules
+        self.security_groups = []
+        self.security_groups.append(SecurityGroup(**security_group_args))
+
+        ###User Data###
         if kwargs.get('user_data'):
             self.user_data_format = 'RAW'
             self.user_data = {}
             self.user_data = kwargs.get('user_data')
         else:
             self.user_data = None
+
+        ###Port and floating IP config###
         self.port_enable = kwargs.get('port_enable')
         self.floating_ip_enable = kwargs.get('floating_ip_enable')
         if self.port_enable or self.floating_ip_enable:
             self.port_enable = True
-            security_groups = kwargs.get('security_groups')
             port_args = {}
             port_args['name'] = '%s_port' % self.name
             port_args['private_net'] = kwargs.get('private_net')
             port_args['private_subnet'] = kwargs.get('private_subnet')
-            port_args['security_groups'] = security_groups
+            port_args['security_groups'] = self.security_groups
             self.port = Port(**port_args)
             self.networks = [self.port.name]
         else:
             self.port = None
             self.networks = None
-
         if self.floating_ip_enable:
             floating_ip_args = {}
             floating_ip_args['name'] = '%s_floating_ip' % self.name
@@ -242,6 +245,9 @@ class Server(object):
         if self.floating_ip_enable:
             floating_ip_config = self.floating_ip.dump_to_dict()
             resources.update(floating_ip_config)
+
+        for security_group in self.security_groups:
+            resources.update(security_group.dump_to_dict())
 
         return resources
 
@@ -353,12 +359,30 @@ class Heat_AutoScalingGroup(object):
         self.image = kwargs.get('image')
         self.flavor = kwargs.get('flavor')
         self.key_name = kwargs.get('key_name')
-        self.security_groups = kwargs.get('security_groups')
         self.user_data = kwargs.get('user_data')
 
         self.private_net = kwargs.get('private_net')
         self.private_subnet = kwargs.get('private_subnet')
         self.public_net = kwargs.get('public_net')
+
+        ###Security Group###
+        security_group_config = kwargs.get('security_group')
+        security_group_args = {}
+        security_group_args['name'] = security_group_config.get('name')
+        rules_user = security_group_config.get('rules')
+        rules = []
+        for rule_user in rules_user:
+            rule = {}
+            rule['name'] = rule_user['name']
+            rule['remote_ip_prefix'] = rule_user['remote_ip_prefix']
+            rule['protocol'] = rule_user['protocol']
+            rule['port_range_min'] = rule_user.get('port_range_min')
+            rule['port_range_max'] = rule_user.get('port_range_max')
+            rules.append(rule)
+        security_group_args['rules'] = rules
+
+        self.security_groups = []
+        self.security_groups.append(SecurityGroup(**security_group_args))
 
         self.policies = kwargs.get('policies')
         self.alarms = []
@@ -433,6 +457,8 @@ class Heat_AutoScalingGroup(object):
             resources.update(alarm.dump_to_dict())
         for action in self.actions:
             resources.update(action.dump_to_dict())
+        for security_group in self.security_groups:
+            resources.update(security_group.dump_to_dict())
 
         return resources
 
