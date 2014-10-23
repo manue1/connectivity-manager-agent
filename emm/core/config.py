@@ -433,7 +433,7 @@ class Heat_AutoScalingGroup(object):
         resource_properties['image'] = self.image
         resource_properties['flavor'] = self.flavor
         resource_properties['key_name'] = self.key_name
-        resource_properties['metadata'] = {'metering_stack' : self.name}
+        resource_properties['metadata'] = {'metering.stack' : self.name}
         if self.user_data:
             resource_properties['user_data'] = {}
             resource_properties['user_data']['str_replace'] = {}
