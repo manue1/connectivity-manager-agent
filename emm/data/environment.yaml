@@ -1,5 +1,3 @@
 resource_registry:
   #"Nubomedia::MediaServer": file:///net/u/mpa/project/templates/nubomedia_media_server.yaml
   "Nubomedia::MediaServer": file:///etc/nubomedia/nubomedia_media_server.yaml
-  #"MediaServer": https://www.dropbox.com/s/8b7117v9h3j5058/nubomedia_media_server.yaml?dl=0
-  #"Nubomedia::MediaServer": https://drive.google.com/file/d/0B9zrnZpPn20ENlFINWJBelNaX00/view?usp=sharing

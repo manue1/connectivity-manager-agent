@@ -19,6 +19,7 @@ from heatclient.v1 import client as heat
 from heatclient.common import utils
 from heatclient.common import template_utils
 import heatclient.exc as exc
+import json
 
 
 class Client(object):
@@ -54,7 +55,6 @@ class Client(object):
             #'environment' : env
         }
 
-        import json
         print json.dumps(kcargs, indent=2)
         timeout = kwargs.get('timeout') or kwargs.get('create_timeout')
         if timeout:
