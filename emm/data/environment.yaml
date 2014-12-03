@@ -1,3 +1,0 @@
-resource_registry:
-  #"Nubomedia::MediaServer": file:///net/u/mpa/project/templates/nubomedia_media_server.yaml
-  "Nubomedia::MediaServer": file:///etc/nubomedia/nubomedia_media_server.yaml
