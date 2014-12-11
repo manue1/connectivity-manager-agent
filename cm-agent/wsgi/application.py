@@ -1,17 +1,21 @@
 #!/usr/bin/python
 
+import json
 import logging
 
 from bottle import Bottle, response, request
+from core.agent import Agent as CMAgent
 
 __author__ = 'beb'
 
 def not_found(message):
     response.body = message
     response.status = 404
-    # response.content_type = 'application/json'
     return response
 
+def encode_dict_json(data_dict):
+    data_json = json.dumps(data_dict)
+    return data_json
 
 class Application:
 
@@ -21,13 +25,11 @@ class Application:
         self._app = Bottle()
         self._route()
         self._debug = True
+        self.agent = CMAgent()
 
     def _route(self):
         ###Welcome Screen
         self._app.route('/', method="GET", callback=self._welcome)
-
-        ###Initialize Agent??
-        self._app.route('/init', method="POST", callback=self._init)
 
         ###Hypervisor methods
         self._app.route('/hypervisors', method="GET", callback=self._hypervisor_list)
@@ -42,20 +44,22 @@ class Application:
         response.status = 200
         return response
 
-    def _init(self):
-        """
-        Initialize the Agent.
-        """
-        # TODO implement Init method
-        pass
-
     def _hypervisor_list(self):
         """
         List all OpenStack hypervisor
         """
-        # TODO implement List hypervisor method
+        self.agent = CMAgent()
 
-        pass
+        hypervisors = self.agent.list_hypervisors()
+        print "These are the hypervisors"
+        print hypervisors
+
+        response.body = encode_dict_json(hypervisors)
+        print "This is the response body:"
+        print response.body
+        response.status = 200
+        response.content_type = 'application/json'
+        return response
 
     def _hypervisor_select(self):
         """
@@ -74,4 +78,5 @@ class Application:
 
 if __name__ == '__main__':
     server = Application(host='0.0.0.0', port=8091)
+    print('Connectivity Manager Agent serving on port 8091...')
     server.start()

@@ -15,7 +15,6 @@ class Client(object):
         kwargs = [USERNAME, PASSWORD, TENANT_NAME, AUTH_URLv2]
         self.novaclient = NovaClient(*kwargs)
 
-    def list_hypervisors(self):
-        hypervisors = self.novaclient.hypervisors.list(self)
-        print "nova hypervisors: %s" % hypervisors
+    def get_hypervisors(self):
+        hypervisors = self.novaclient.hypervisors.list()
         return hypervisors
