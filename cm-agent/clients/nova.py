@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-__author__ = 'beb'
-
 from novaclient.v1_1.client import Client as NovaClient
+
+__author__ = 'beb'
 
 AUTH_URLv2 = 'http://192.168.120.15:5000/v2.0'
 AUTH_URLv3 = 'http://192.168.120.15:5000/v3'

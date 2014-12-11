@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import httplib
-import json
 
 __author__ = 'beb'
 

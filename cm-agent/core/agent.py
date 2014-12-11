@@ -1,6 +1,8 @@
-__author__ = 'beb'
+#!/usr/bin/python
 
-from model.Entities import Cloud
+from model.entities import Cloud
+
+__author__ = 'beb'
 
 class Agent(object):
 
@@ -12,6 +14,10 @@ class Agent(object):
         return hypervisors
 
     def select_hypervisor(self):
+        self.list_hypervisors()
+
+
+
         pass
 
     def list_ports(self):

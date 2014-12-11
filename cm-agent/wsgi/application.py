@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import json
-import logging
 
 from bottle import Bottle, response, request
 from core.agent import Agent as CMAgent
@@ -51,11 +50,9 @@ class Application:
         self.agent = CMAgent()
 
         hypervisors = self.agent.list_hypervisors()
-        print "These are the hypervisors"
-        print hypervisors
 
         response.body = encode_dict_json(hypervisors)
-        print "This is the response body:"
+        print "Hypervisor list response"
         print response.body
         response.status = 200
         response.content_type = 'application/json'
