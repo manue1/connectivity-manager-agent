@@ -26,13 +26,13 @@ class Application:
         ###Welcome Screen
         self._app.route('/', method="GET", callback=self._welcome)
 
-        ###Initialize Agent
+        ###Initialize Agent??
         self._app.route('/init', method="POST", callback=self._init)
 
-        ###Host methods
-        self._app.route('/hosts', method="GET", callback=self._host_list)
-        self._app.route('/hosts', method="POST", callback=self._host_select)
-        self._app.route('/hosts/<id>', method="GET", callback=self._host_show)
+        ###Hypervisor methods
+        self._app.route('/hypervisors', method="GET", callback=self._hypervisor_list)
+        self._app.route('/hypervisors', method="POST", callback=self._hypervisor_select)
+        self._app.route('/hypervisors/<id>', method="GET", callback=self._hypervisor_show)
 
     def start(self):
         self._app.run(host=self._host, port=self._port)
@@ -49,26 +49,26 @@ class Application:
         # TODO implement Init method
         pass
 
-    def _host_list(self):
+    def _hypervisor_list(self):
         """
-        List all OpenStack hosts
+        List all OpenStack hypervisor
         """
-        # TODO implement List Hosts method
+        # TODO implement List hypervisor method
 
         pass
 
-    def _host_select(self):
+    def _hypervisor_select(self):
         """
-        Select host to deploy Stack to
+        Select hypervisor to deploy Stack to
         """
-        # TODO implement Select Host method
+        # TODO implement Select hypervisor method
         pass
 
-    def _host_show(self):
+    def _hypervisor_show(self):
         """
-        Show details of a OpenStack host
+        Show details of a OpenStack hypervisor
         """
-        # TODO implement Show Host method
+        # TODO implement Show hypervisor method
         pass
 
 
