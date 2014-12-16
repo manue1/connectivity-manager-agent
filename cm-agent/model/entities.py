@@ -12,7 +12,7 @@ class Cloud(object):
         host_info = {}
         hypervisors = self.novaclient.get_hypervisors()
         for hypervisor in hypervisors:
-            #host_info[hypervisor.hypervisor_hostname] = hypervisor._info
+            # host_info[hypervisor.hypervisor_hostname] = hypervisor._info
             host_info[hypervisor.hypervisor_hostname] = {}
             host_info[hypervisor.hypervisor_hostname]['ip'] = hypervisor.host_ip
             host_info[hypervisor.hypervisor_hostname]['vm_count'] = hypervisor.running_vms

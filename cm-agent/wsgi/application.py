@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import json
-import logging
 
 from bottle import Bottle, response, request
 from core.agent import Agent as CMAgent
@@ -28,10 +27,10 @@ class Application:
         self.agent = CMAgent()
 
     def _route(self):
-        ###Welcome Screen
+        # Welcome Screen
         self._app.route('/', method="GET", callback=self._welcome)
 
-        ###Hypervisor methods
+        # Hypervisor methods
         self._app.route('/hypervisors', method="GET", callback=self._hypervisor_list)
         self._app.route('/hypervisors', method="POST", callback=self._hypervisor_select)
         self._app.route('/hypervisors/<id>', method="GET", callback=self._hypervisor_show)
@@ -46,16 +45,14 @@ class Application:
 
     def _hypervisor_list(self):
         """
-        List all OpenStack hypervisor
+        List all OpenStack hypervisors
         """
         self.agent = CMAgent()
 
         hypervisors = self.agent.list_hypervisors()
-        print "These are the hypervisors"
-        print hypervisors
 
         response.body = encode_dict_json(hypervisors)
-        print "This is the response body:"
+        print "Hypervisor list response"
         print response.body
         response.status = 200
         response.content_type = 'application/json'
