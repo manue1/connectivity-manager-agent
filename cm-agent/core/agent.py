@@ -15,9 +15,6 @@ class Agent(object):
 
     def select_hypervisor(self):
         self.list_hypervisors()
-
-
-
         pass
 
     def list_ports(self):

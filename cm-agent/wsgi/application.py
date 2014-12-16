@@ -27,10 +27,10 @@ class Application:
         self.agent = CMAgent()
 
     def _route(self):
-        ###Welcome Screen
+        # Welcome Screen
         self._app.route('/', method="GET", callback=self._welcome)
 
-        ###Hypervisor methods
+        # Hypervisor methods
         self._app.route('/hypervisors', method="GET", callback=self._hypervisor_list)
         self._app.route('/hypervisors', method="POST", callback=self._hypervisor_select)
         self._app.route('/hypervisors/<id>', method="GET", callback=self._hypervisor_show)
@@ -45,7 +45,7 @@ class Application:
 
     def _hypervisor_list(self):
         """
-        List all OpenStack hypervisor
+        List all OpenStack hypervisors
         """
         self.agent = CMAgent()
 
