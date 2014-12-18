@@ -31,9 +31,12 @@ class Application:
         self._app.route('/', method="GET", callback=self._welcome)
 
         # Hypervisor methods
-        self._app.route('/hypervisors', method="GET", callback=self._hypervisor_list)
-        self._app.route('/hypervisors', method="POST", callback=self._hypervisor_select)
-        self._app.route('/hypervisors/<id>', method="GET", callback=self._hypervisor_show)
+        self._app.route('/hosts', method="GET", callback=self._hosts_list)
+        self._app.route('/hosts', method="POST", callback=self._hosts_select)
+
+        # ToDo: QoS methods
+        #self._app.route('/qos', method="GET", callback=self._qos_list)
+        #self._app.route('/qos', method="POST", callback=self._qos_set)
 
     def start(self):
         self._app.run(host=self._host, port=self._port)
@@ -43,7 +46,7 @@ class Application:
         response.status = 200
         return response
 
-    def _hypervisor_list(self):
+    def _hosts_list(self):
         """
         List all OpenStack hypervisors
         """
@@ -58,18 +61,11 @@ class Application:
         response.content_type = 'application/json'
         return response
 
-    def _hypervisor_select(self):
+    def _hosts_select(self):
         """
         Select hypervisor to deploy Stack to
         """
         # TODO implement Select hypervisor method
-        pass
-
-    def _hypervisor_show(self):
-        """
-        Show details of a OpenStack hypervisor
-        """
-        # TODO implement Show hypervisor method
         pass
 
 
