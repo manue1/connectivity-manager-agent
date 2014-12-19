@@ -32,11 +32,10 @@ class Application:
 
         # Hypervisor methods
         self._app.route('/hosts', method="GET", callback=self._hosts_list)
-        self._app.route('/hosts', method="POST", callback=self._hosts_select)
 
         # ToDo: QoS methods
-        #self._app.route('/qos', method="GET", callback=self._qos_list)
-        #self._app.route('/qos', method="POST", callback=self._qos_set)
+        #self._app.route('/qoses', method="GET", callback=self._qoses_list)
+        #self._app.route('/qoses', method="POST", callback=self._qoses_set)
 
     def start(self):
         self._app.run(host=self._host, port=self._port)
@@ -60,13 +59,6 @@ class Application:
         response.status = 200
         response.content_type = 'application/json'
         return response
-
-    def _hosts_select(self):
-        """
-        Select hypervisor to deploy Stack to
-        """
-        # TODO implement Select hypervisor method
-        pass
 
 
 if __name__ == '__main__':
