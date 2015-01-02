@@ -31,6 +31,7 @@ class Application:
         self._app.route('/', method="GET", callback=self._welcome)
 
         # Hypervisor methods
+
         self._app.route('/hosts', method="GET", callback=self._hosts_list)
 
         # ToDo: QoS methods

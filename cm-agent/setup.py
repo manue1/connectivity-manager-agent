@@ -5,9 +5,12 @@ from setuptools import setup
 setup(
     name='ConnectivityManagerAgent',
     version='0.1',
-    packages=['clients', 'core', 'model', 'wsgi', 'test'],
+    packages=['clients', 'core', 'wsgi', 'test'],
     install_requires=[
         'bottle',
+        'python-novaclient',
+        'python-neutronclient',
+        'python-keystoneclient',
     ],
     url='',
     license='',

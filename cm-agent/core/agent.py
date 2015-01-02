@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from clients.nova import Client as NovaClient
+from clients.ovs import Client as OVSClient
 
 __author__ = 'beb'
 
@@ -12,10 +13,6 @@ class Agent(object):
     def list_hypervisors(self):
         hypervisors = self.cloud.read_hypervisor_info()
         return hypervisors
-
-    def select_hypervisor(self):
-        self.list_hypervisors()
-        pass
 
     def list_ports(self):
         pass
@@ -47,7 +44,13 @@ class Cloud(object):
         return host_info
 
 class Host(object):
-    pass
+    def __init__(self):
+        self.ovsclient = OVSClient()
+
+    def read_port_info(self):
+        port_info = {}
+        ports = self.ovsclient.list_ports()
+        pass
 
 class Switch(object):
     pass
@@ -58,3 +61,9 @@ class Ports(object):
 class QoS(object):
     pass
 
+def _get_endpoint(service_type, endpoint_type=None):
+    from clients import keystone
+    # ##Init keystone client
+    ksclient = keystone.Client()
+    endpoint = ksclient.get_endpoint(service_type=service_type, endpoint_type=endpoint_type)
+    return endpoint
