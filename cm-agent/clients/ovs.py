@@ -30,6 +30,10 @@ class Client(object):
         ports = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % self.host_ip, "list", "port"])
         return ports
 
+    def list_interfaces(self):
+        interfaces = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % self.host_ip, "list", "interface"])
+        return interfaces
+
     def create_queue(self, min_rate, max_rate):
         queue_id = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % self.host_ip, "create", "queue", "type=linux-htb", "other-config:min-rate=%d" % min_rate, "other-config:max-rate=%d" % max_rate])
         return queue_id

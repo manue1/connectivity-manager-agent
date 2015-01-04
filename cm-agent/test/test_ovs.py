@@ -10,3 +10,6 @@ if __name__ == '__main__':
 
     ports = client.list_ports()
     print ports
+
+    interfaces = client.list_interfaces()
+    print interfaces
