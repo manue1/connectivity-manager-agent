@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import logging
 from core.agent import Agent, Cloud
 
 __author__ = 'beb'
@@ -23,3 +24,14 @@ if __name__ == '__main__':
 
     #for hypervisor in hypervisors:
     #    print agent.cloud.read_hypervisor_server_info(hypervisor)
+
+    #matches = agent.match_servers(servers)
+    #logging.debug('Printing server items as string .. %s', matches)
+
+    #print matches
+
+    matches = agent.print_servers(servers)
+    logging.debug('Printing matches')
+
+    print matches
+

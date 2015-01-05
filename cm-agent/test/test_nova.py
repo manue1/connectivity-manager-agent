@@ -23,3 +23,7 @@ if __name__ == '__main__':
     servers = client.get_servers()
     for server in servers:
         print server._info
+
+    servers = client.get_hypervisor_servers('control')
+    for server in servers:
+        print server

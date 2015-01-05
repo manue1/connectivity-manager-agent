@@ -22,3 +22,8 @@ class Client(object):
     def get_servers(self):
         servers = self.novaclient.servers.list()
         return servers
+
+    # not useful
+    def get_hypervisor_servers(self, hyp):
+        servers = self.novaclient.hypervisors.search(hyp, servers=True)
+        return servers
