@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     #print matches
 
-    matches = agent.print_servers(servers)
+    matches = agent.print_server_hypervisor(servers)
     logging.debug('Printing matches')
 
     print matches
