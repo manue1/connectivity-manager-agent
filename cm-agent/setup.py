@@ -1,11 +1,11 @@
 __author__ = 'beb'
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='ConnectivityManagerAgent',
     version='0.1',
-    packages=['clients', 'core', 'wsgi', 'test'],
+    packages= find_packages(),
     install_requires=[
         'bottle',
         'python-novaclient',

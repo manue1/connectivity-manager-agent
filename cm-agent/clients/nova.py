@@ -8,7 +8,7 @@ AUTH_URLv2 = 'http://192.168.120.15:5000/v2.0'
 AUTH_URLv3 = 'http://192.168.120.15:5000/v3'
 USERNAME = 'admin'
 PASSWORD = 'pass'
-TENANT_NAME = 'demo'
+TENANT_NAME = 'admin'
 
 class Client(object):
     def __init__(self):
@@ -18,3 +18,7 @@ class Client(object):
     def get_hypervisors(self):
         hypervisors = self.novaclient.hypervisors.list()
         return hypervisors
+
+    def get_servers(self):
+        servers = self.novaclient.servers.list(search_opts={'deleted': 'true'})
+        return servers
