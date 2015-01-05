@@ -22,14 +22,6 @@ if __name__ == '__main__':
     servers = agent.list_servers()
     print servers
 
-    #for hypervisor in hypervisors:
-    #    print agent.cloud.read_hypervisor_server_info(hypervisor)
-
-    #matches = agent.match_servers(servers)
-    #logging.debug('Printing server items as string .. %s', matches)
-
-    #print matches
-
     matches = agent.print_server_hypervisor(servers)
     logging.debug('Printing matches')
 

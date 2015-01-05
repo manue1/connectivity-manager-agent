@@ -22,11 +22,6 @@ class Agent(object):
         logging.debug('Getting list of all servers .. %s', servers)
         return servers
 
-    # just for testing
-    def match_servers(self, serv):
-        match = self.cloud.match_server_hypervisor(serv)
-        return match
-
     def print_server_hypervisor(self, serv):
         server_match = {}
         for servers in serv.values():
@@ -70,9 +65,6 @@ class Cloud(object):
             server_info[server.hostId] = {}
             server_info[server.hostId] = server._info
         return server_info
-
-    def match_server_hypervisor(self, servers):
-        return ', '.join("%s=%r" % (key,val) for (key,val) in servers.iteritems())
 
 class Host(object):
     def __init__(self):
