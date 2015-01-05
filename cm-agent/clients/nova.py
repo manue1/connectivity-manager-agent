@@ -20,5 +20,5 @@ class Client(object):
         return hypervisors
 
     def get_servers(self):
-        servers = self.novaclient.servers.list(search_opts={'deleted': 'true'})
+        servers = self.novaclient.servers.list()
         return servers
