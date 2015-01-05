@@ -23,7 +23,7 @@ class Agent(object):
         return servers
 
     def print_server_hypervisor(self, serv):
-        server_match = {}
+        server_match = []
         for servers in serv.values():
             server_match.append(servers['OS-EXT-SRV-ATTR:hypervisor_hostname'])
         return server_match
