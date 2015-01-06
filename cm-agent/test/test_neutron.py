@@ -15,4 +15,5 @@ if __name__ == '__main__':
 
     neutron.list_ports()
 
-    port = neutron.get_ports('10.0.0.1')
+    port = neutron.get_ports('10.0.0.2')
+    print port
