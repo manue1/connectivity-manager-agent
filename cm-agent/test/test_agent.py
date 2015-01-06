@@ -29,3 +29,6 @@ if __name__ == '__main__':
 
     serverips = agent.cloud.merge_server_info()
     print serverips
+
+    interfaces = agent.host.list_interfaces_hypervisor(hypervisors)
+    print interfaces

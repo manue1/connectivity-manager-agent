@@ -12,6 +12,7 @@ class Agent(object):
 
     def __init__(self):
         self.cloud = Cloud()
+        self.host = Host()
 
     def list_hypervisors(self):
         hypervisors = self.cloud.read_hypervisor_info()
@@ -45,8 +46,9 @@ class Agent(object):
 class Cloud(object):
     def __init__(self):
         self.keystoneclient = KeystoneClient()
+        self.endpoint = self.keystoneclient.get_endpoint(service_type='network', endpoint_type=None)
         self.novaclient = NovaClient()
-        self.neutronclient = NeutronClient(_get_endpoint('network'), self.keystoneclient.get_token())
+        self.neutronclient = NeutronClient(self.endpoint, self.keystoneclient.get_token())
 
     def read_hypervisor_info(self):
         host_info = {}
@@ -93,27 +95,17 @@ class Host(object):
     def __init__(self):
         self.ovsclient = OVSClient()
 
+    def list_interfaces_hypervisor(self, hypervisors):
+        interfaces = {}
+        for hypervisor in hypervisors.get('ip'):
+            interfaces[hypervisor] = self.ovsclient.list_interfaces(hypervisor.host_ip)
+        return interfaces
+
     def read_port_info(self):
         port_info = {}
-        ports = self.ovsclient.list_ports()
+        ports = self.ovsclient.list_interfaces()
         pass
-
-
-class Switch(object):
-    pass
-
-
-class Ports(object):
-    pass
 
 
 class QoS(object):
     pass
-
-
-def _get_endpoint(service_type, endpoint_type=None):
-    from clients import keystone
-    # ##Init keystone client
-    ksclient = keystone.Client()
-    endpoint = ksclient.get_endpoint(service_type=service_type, endpoint_type=endpoint_type)
-    return endpoint

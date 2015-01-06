@@ -6,10 +6,10 @@ __author__ = 'beb'
 
 if __name__ == '__main__':
 
-    client = Client('192.168.120.15')
+    client = Client()
 
-    ports = client.list_ports()
+    ports = client.list_ports('192.168.120.15')
     print ports
 
-    interfaces = client.list_interfaces()
+    interfaces = client.list_interfaces('192.168.120.15')
     print interfaces
