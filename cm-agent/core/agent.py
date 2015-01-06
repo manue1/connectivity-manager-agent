@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 import logging
+from clients.keystone import Client as KeystoneClient
 from clients.nova import Client as NovaClient
+from clients.neutron import Client as NeutronClient
 from clients.ovs import Client as OVSClient
 
 __author__ = 'beb'
@@ -16,16 +18,16 @@ class Agent(object):
         logging.debug('Getting list of hypervisors .. %s', hypervisors)
         return hypervisors
 
-    # just for testing
     def list_servers(self):
         servers = self.cloud.read_server_info()
         logging.debug('Getting list of all servers .. %s', servers)
         return servers
 
     def print_server_hypervisor(self, serv):
-        server_match = []
+        server_match = {}
         for servers in serv.values():
-            server_match.append(servers['OS-EXT-SRV-ATTR:hypervisor_hostname'])
+            server_match[servers['OS-EXT-SRV-ATTR:hypervisor_hostname']] = servers['hostId']
+
         return server_match
 
     def list_ports(self):
@@ -42,7 +44,9 @@ class Agent(object):
 
 class Cloud(object):
     def __init__(self):
+        self.keystoneclient = KeystoneClient()
         self.novaclient = NovaClient()
+        self.neutronclient = NeutronClient(_get_endpoint('network'), self.keystoneclient.get_token())
 
     def read_hypervisor_info(self):
         host_info = {}
@@ -66,7 +70,26 @@ class Cloud(object):
             server_info[server.hostId] = server._info
         return server_info
 
+    def merge_server_info(self):
+        servers = self.novaclient.get_servers()
+        ips = {}
+        for server in servers:
+            ips = self.get_server_ip(server)
+        return ips
+
+    def get_server_ip(self, server):
+        ips = []
+        if hasattr(server, 'addresses'):
+            for interface in server.addresses.values():
+                ips.append(interface[0]['addr'])
+        return ips
+
+    def get_neutron_port(self, ip):
+        pass
+
+
 class Host(object):
+
     def __init__(self):
         self.ovsclient = OVSClient()
 
@@ -75,14 +98,18 @@ class Host(object):
         ports = self.ovsclient.list_ports()
         pass
 
+
 class Switch(object):
     pass
+
 
 class Ports(object):
     pass
 
+
 class QoS(object):
     pass
+
 
 def _get_endpoint(service_type, endpoint_type=None):
     from clients import keystone

@@ -14,3 +14,5 @@ if __name__ == '__main__':
     neutron = NeutronClient(agent._get_endpoint('network'), ksclient.get_token())
 
     neutron.list_ports()
+
+    port = neutron.get_ports('10.0.0.1')

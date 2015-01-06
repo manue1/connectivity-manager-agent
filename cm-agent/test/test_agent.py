@@ -23,7 +23,9 @@ if __name__ == '__main__':
     print servers
 
     matches = agent.print_server_hypervisor(servers)
-    logging.debug('Printing matches')
+    logging.info('Printing matches')
 
     print matches
 
+    serverips = agent.cloud.merge_server_info()
+    print serverips
