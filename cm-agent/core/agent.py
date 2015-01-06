@@ -85,7 +85,7 @@ class Cloud(object):
         return ips
 
     def get_neutron_port(self, ip):
-        pass
+        return self.neutronclient.get_ports(ip)
 
 
 class Host(object):

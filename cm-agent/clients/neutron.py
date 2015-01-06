@@ -17,6 +17,5 @@ class Client(object):
         return ips
 
     def get_ports(self, ip):
-        ports = []
         lst = self.list_ports()
         return next((k for k, v in lst.items() if v == ip), None)
