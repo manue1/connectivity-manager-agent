@@ -97,8 +97,8 @@ class Host(object):
 
     def list_interfaces_hypervisor(self, hypervisors):
         interfaces = {}
-        for hypervisor in hypervisors.get('ip'):
-            interfaces[hypervisor] = self.ovsclient.list_interfaces(hypervisor.host_ip)
+        for hypervisor in hypervisors.values():
+            interfaces[hypervisor] = self.ovsclient.list_interfaces(hypervisor['ip'])
         return interfaces
 
     def read_port_info(self):
