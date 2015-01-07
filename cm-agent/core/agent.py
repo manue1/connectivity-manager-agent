@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import logging
+import json
+import re
 from clients.keystone import Client as KeystoneClient
 from clients.nova import Client as NovaClient
 from clients.neutron import Client as NeutronClient
@@ -104,8 +106,35 @@ class Host(object):
         return interfaces
 
     def read_port_info(self, interfaces, server_port):
+        print server_port
+        print re.search(server_port, interfaces).start()
+        print re.search("(qvo.*?[^\'])\"", interfaces)
         
-        pass
+        #print _interfaces
+        #for _interface in _interfaces.get('data'):
+            #print re.split("\n+", _interface)
+            #re.search("c", _interface)
+            #print _interface
+            #for k in _interface:
+            #    print k
+            #    print type(k)
+            #    print re.split("\n+", k)
+            #    print k
+                #for v in k:
+                 #   print next((k1 for k1, v1 in v.items() if v1 == 'map'), None)
+                    #print v
+                    #if v == 'map':
+                    #    for k_inner in v:
+                    #        for k_inner2 in k_inner:
+                    #            print v
+                    #            print k[v][k_inner2]
+
+                    #for k_inner in v:
+                    #    print k_inner
+                    #for subkey, v in key.get('map'):
+                    #    if v == server_port:
+                    #        print 'hello'
+
 
 
 class QoS(object):

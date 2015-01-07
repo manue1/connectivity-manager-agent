@@ -19,14 +19,14 @@ if __name__ == '__main__':
 
     hypervisors = agent.list_hypervisors()
 
-    servers = agent.list_servers()
+    #servers = agent.list_servers()
 
-    matches = agent.print_server_hypervisor(servers)
+    #matches = agent.print_server_hypervisor(servers)
 
-    serverips = agent.cloud.merge_server_info()
+    #serverips = agent.cloud.merge_server_info()
 
     neutronport = agent.cloud.get_neutron_port('172.24.4.3')
 
-    interfaces = agent.host.list_interfaces_hypervisor('compute', hypervisors)
+    interfaces = agent.host.list_interfaces_hypervisor('control', hypervisors)
 
     port_info = agent.host.read_port_info(interfaces, neutronport)

@@ -27,7 +27,7 @@ class Client(object):
         return ports
 
     def list_interfaces(self, host_ip):
-        interfaces = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "--columns=name,external-ids,other-config", "list", "interface"])
+        interfaces = subprocess.check_output(["sudo", "ovs-vsctl", "--format=json", "--db=tcp:%s:6640" % host_ip, "--columns=name,external-ids,other-config", "list", "interface"])
         return interfaces
 
     def create_queue(self, host_ip, min_rate, max_rate):
