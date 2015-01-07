@@ -16,32 +16,24 @@ class Agent(object):
 
     def list_hypervisors(self):
         hypervisors = self.cloud.read_hypervisor_info()
-        logging.debug('Getting list of hypervisors .. %s', hypervisors)
+        logging.info('Getting list of hypervisors .. %s', hypervisors)
         return hypervisors
 
     def list_servers(self):
         servers = self.cloud.read_server_info()
-        logging.debug('Getting list of all servers .. %s', servers)
+        logging.info('Getting list of all servers .. %s', servers)
         return servers
 
     def print_server_hypervisor(self, serv):
         server_match = {}
         for servers in serv.values():
             server_match[servers['OS-EXT-SRV-ATTR:hypervisor_hostname']] = servers['hostId']
-
+        logging.info('Getting servers for matching hypervisor %s: %s', server_match, serv)
         return server_match
-
-    def list_ports(self):
-        pass
 
     def list_qoss(self):
         pass
 
-    def list_flows(self):
-        pass
-
-    def list_queues(self):
-        pass
 
 class Cloud(object):
     def __init__(self):
@@ -62,6 +54,7 @@ class Cloud(object):
             host_info[hypervisor.hypervisor_hostname]['cpu_used'] = hypervisor.vcpus_used
             host_info[hypervisor.hypervisor_hostname]['cpu_total'] = hypervisor.vcpus
             host_info[hypervisor.hypervisor_hostname]['ram_free'] = hypervisor.free_ram_mb
+        logging.info('Reading info of all hypervisors %s', host_info)
         return host_info
 
     def read_server_info(self):
@@ -70,6 +63,7 @@ class Cloud(object):
         for server in servers:
             server_info[server.hostId] = {}
             server_info[server.hostId] = server._info
+        logging.info('Reading info of all servers %s', server_info)
         return server_info
 
     def merge_server_info(self):
@@ -77,6 +71,7 @@ class Cloud(object):
         ips = {}
         for server in servers:
             ips = self.get_server_ip(server)
+            logging.info('Getting IP %s for server %s', ips, server)
         return ips
 
     def get_server_ip(self, server):
@@ -87,7 +82,9 @@ class Cloud(object):
         return ips
 
     def get_neutron_port(self, ip):
-        return self.neutronclient.get_ports(ip)
+        port = self.neutronclient.get_ports(ip)
+        logging.info('Getting Neutron port ID %s for IP %s', port, ip)
+        return port
 
 
 class Host(object):
@@ -95,20 +92,19 @@ class Host(object):
     def __init__(self):
         self.ovsclient = OVSClient()
 
-    def list_interfaces_hypervisor(self, host, hypervisors):
+    def list_interfaces_hypervisor(self, hypervisor, hypervisors):
         interfaces = {}
         for k,v in hypervisors.items():
-            if k == host:
+            if k == hypervisor:
                 for k_inner, v_inner in v.items():
                     if k_inner == 'ip':
-                        key = v_inner
-                        print key
-                        interfaces = self.ovsclient.list_interfaces(key)
+                        ip = v_inner
+                        interfaces = self.ovsclient.list_interfaces(ip)
+                        logging.info('Getting OVS interfaces %s for IP %s', interfaces, ip)
         return interfaces
 
-    def read_port_info(self):
-        port_info = {}
-        ports = self.ovsclient.list_interfaces()
+    def read_port_info(self, interfaces, server_port):
+        
         pass
 
 

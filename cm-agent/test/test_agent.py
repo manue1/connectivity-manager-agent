@@ -13,22 +13,20 @@ PASSWORD = 'pass'
 TENANT_NAME = 'admin'
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s_%(process)d:%(lineno)d [%(levelname)s] %(message)s',level=logging.DEBUG)
 
     agent = Agent()
 
     hypervisors = agent.list_hypervisors()
-    print hypervisors
 
     servers = agent.list_servers()
-    print servers
 
     matches = agent.print_server_hypervisor(servers)
-    logging.info('Printing matches')
-
-    print matches
 
     serverips = agent.cloud.merge_server_info()
-    print serverips
+
+    neutronport = agent.cloud.get_neutron_port('172.24.4.3')
 
     interfaces = agent.host.list_interfaces_hypervisor('compute', hypervisors)
-    print interfaces
+
+    port_info = agent.host.read_port_info(interfaces, neutronport)
