@@ -98,7 +98,12 @@ class Host(object):
     def list_interfaces_hypervisor(self, hypervisors):
         interfaces = {}
         for hypervisor in hypervisors.values():
-            interfaces[hypervisor] = self.ovsclient.list_interfaces(hypervisor['ip'])
+
+            key = ImmutableDict(hypervisor)
+            #print key
+            print key.get('ip')
+
+            interfaces[hypervisor] = self.ovsclient.list_interfaces(key.get('ip'))
         return interfaces
 
     def read_port_info(self):
@@ -109,3 +114,10 @@ class Host(object):
 
 class QoS(object):
     pass
+
+
+class ImmutableDict(dict):
+    def __setitem__(self, key, value):
+        raise Exception("Don't do this, I'm immutable.")
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
