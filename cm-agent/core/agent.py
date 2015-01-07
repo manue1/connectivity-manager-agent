@@ -95,13 +95,15 @@ class Host(object):
     def __init__(self):
         self.ovsclient = OVSClient()
 
-    def list_interfaces_hypervisor(self, hypervisors):
+    def list_interfaces_hypervisor(self, host, hypervisors):
         interfaces = {}
-        for hypervisor in hypervisors.values():
-
-            key = hypervisor['ip']
-            print key
-            interfaces = self.ovsclient.list_interfaces(key)
+        for k,v in hypervisors.items():
+            if k == host:
+                for k_inner, v_inner in v.items():
+                    if k_inner == 'ip':
+                        key = v_inner
+                        print key
+                        interfaces = self.ovsclient.list_interfaces(key)
         return interfaces
 
     def read_port_info(self):
