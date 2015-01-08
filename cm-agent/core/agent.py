@@ -38,6 +38,8 @@ class Agent(object):
                             for ki, vi in server_ips.items():
                                 if ki == vhs:
                                     cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
+                            #cloud_info[kh]['servers'][vhs]['name'] = self.cloud.get_neutron_port()
+
 
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors

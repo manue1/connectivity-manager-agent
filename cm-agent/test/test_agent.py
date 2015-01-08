@@ -17,13 +17,14 @@ if __name__ == '__main__':
 
     agent = Agent()
 
+    # This test includes all others
     hypervisors = agent.list_hypervisors()
 
     #servers = agent.cloud.read_server_info()
 
-    #matches = print_server_hypervisor_info(servers, 'control')
+    #hypervisors_servers = get_server_hypervisor_info(servers)
 
-    #serverips = agent.cloud.get_server_ips()
+    #server_ips = agent.cloud.get_server_ips()
 
     #neutronport = agent.cloud.get_neutron_port('172.24.4.3')
 
