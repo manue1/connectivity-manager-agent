@@ -20,9 +20,25 @@ class Agent(object):
         hypervisors = self.cloud.read_hypervisor_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
         servers = self.cloud.read_server_info()
-        for k, v in hypervisors.items():
-            cloud_info[k] = v
-            cloud_info[k]['servers'] = print_server_hypervisor_info(servers, k)
+        logging.info('Getting list of servers .. %s', servers)
+        hypervisors_servers = get_server_hypervisor_info(servers)
+        logging.info('Getting list of servers matched with hypervisor .. %s', hypervisors_servers)
+        server_ips = self.cloud.get_server_ips()
+        logging.info('Getting list of all server IPs.. %s', server_ips)
+
+        for kh, vh in hypervisors.items():
+            cloud_info[kh] = vh
+            cloud_info[kh]['servers'] = {}
+            for khs, vhs in hypervisors_servers.items():
+                if kh == khs:
+                    cloud_info[kh]['servers'][vhs] = {}
+                    for ks, vs in servers.items():
+                        if ks == vhs:
+                            cloud_info[kh]['servers'][vhs]['name'] = vs.get('name')
+                            for ki, vi in server_ips.items():
+                                if ki == vhs:
+                                    cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
+
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
 
@@ -67,8 +83,7 @@ class Cloud(object):
         servers = self.novaclient.get_servers()
         ips = {}
         for server in servers:
-            ips = get_server_ip(server)
-            logging.info('Getting IP %s for server %s', ips, server)
+            ips[server.hostId] = get_server_ip(server)
         logging.info('All server IPs %s', ips)
         return ips
 
@@ -96,11 +111,10 @@ def get_server_ip(server):
             ips.append(interface[0]['addr'])
     return ips
 
-def print_server_hypervisor_info(serv, hypervisor):
-    server_match = []
-    for servers in serv.values():
-        if servers['OS-EXT-SRV-ATTR:hypervisor_hostname'] == hypervisor:
-            server_match.append(servers['hostId'])
+def get_server_hypervisor_info(servers):
+    server_match = {}
+    for server in servers.values():
+            server_match[server['OS-EXT-SRV-ATTR:hypervisor_hostname']] = server['hostId']
     logging.info('Getting servers for matching hypervisor: %s', server_match)
     return server_match
 
