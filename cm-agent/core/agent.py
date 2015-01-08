@@ -106,36 +106,12 @@ class Host(object):
         return interfaces
 
     def read_port_info(self, interfaces, server_port):
-        print server_port
-        print re.search(server_port, interfaces).start()
-        print re.search("(qvo.*?[^\'])\"", interfaces)
-        
-        #print _interfaces
-        #for _interface in _interfaces.get('data'):
-            #print re.split("\n+", _interface)
-            #re.search("c", _interface)
-            #print _interface
-            #for k in _interface:
-            #    print k
-            #    print type(k)
-            #    print re.split("\n+", k)
-            #    print k
-                #for v in k:
-                 #   print next((k1 for k1, v1 in v.items() if v1 == 'map'), None)
-                    #print v
-                    #if v == 'map':
-                    #    for k_inner in v:
-                    #        for k_inner2 in k_inner:
-                    #            print v
-                    #            print k[v][k_inner2]
+        end = re.search(server_port, interfaces).start()
+        start = end - 75
+        ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])
+        logging.info('Getting OVS port: %s, for Neutron Port ID: %s', ovs_port, server_port)
+        return ovs_port
 
-                    #for k_inner in v:
-                    #    print k_inner
-                    #for subkey, v in key.get('map'):
-                    #    if v == server_port:
-                    #        print 'hello'
-
-
-
+    
 class QoS(object):
     pass
