@@ -20,16 +20,9 @@ class Agent(object):
         hypervisors = self.cloud.read_hypervisor_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
         servers = self.cloud.read_server_info()
-        logging.info('### Server list .. %s', servers)
-        server_ips = self.cloud.get_server_ips()
-        logging.info('### Server ips .. %s', server_ips)
-
         for k, v in hypervisors.items():
             cloud_info[k] = v
-            server_id = [print_server_hypervisor_info(servers, k)]
-            cloud_info[k]['servers'][server_id] = {}
-            cloud_info[k]['servers'][server_id] =
-
+            cloud_info[k]['servers'] = print_server_hypervisor_info(servers, k)
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
 
@@ -76,6 +69,7 @@ class Cloud(object):
         for server in servers:
             ips = get_server_ip(server)
             logging.info('Getting IP %s for server %s', ips, server)
+        logging.info('All server IPs %s', ips)
         return ips
 
     def get_neutron_port(self, ip):
