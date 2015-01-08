@@ -25,7 +25,7 @@ class Agent(object):
         logging.info('Getting list of servers matched with hypervisor .. %s', hypervisors_servers)
         server_ips = self.cloud.get_server_ips()
         logging.info('Getting list of all server IPs.. %s', server_ips)
-
+        
         for kh, vh in hypervisors.items():
             cloud_info[kh] = vh
             cloud_info[kh]['servers'] = {}
@@ -38,7 +38,7 @@ class Agent(object):
                             for ki, vi in server_ips.items():
                                 if ki == vhs:
                                     cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
-                            #cloud_info[kh]['servers'][vhs]['name'] = self.cloud.get_neutron_port()
+                                    cloud_info[kh]['servers'][vhs]['neutron_port'] = self.cloud.get_neutron_port(vi[0])
 
 
         logging.info('Cloud info .. %s', cloud_info)
@@ -120,7 +120,7 @@ def get_server_hypervisor_info(servers):
     logging.info('Getting servers for matching hypervisor: %s', server_match)
     return server_match
 
-def read_port_info(interfaces, server_port):
+def get_port_id(interfaces, server_port):
     end = re.search(server_port, interfaces).start()
     start = end - 75
     ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])

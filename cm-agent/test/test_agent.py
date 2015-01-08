@@ -30,4 +30,4 @@ if __name__ == '__main__':
 
     #interfaces = agent.cloud.list_interfaces_hypervisor('control', hypervisors)
 
-    #port_info = read_port_info(interfaces, neutronport)
+    #port_info = get_port_id(interfaces, neutronport)
