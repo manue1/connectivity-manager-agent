@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     #matches = print_server_hypervisor_info(servers, 'control')
 
-    #serverips = agent.cloud.merge_server_info()
+    #serverips = agent.cloud.get_server_ips()
 
     #neutronport = agent.cloud.get_neutron_port('172.24.4.3')
 

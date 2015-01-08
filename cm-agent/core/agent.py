@@ -18,11 +18,18 @@ class Agent(object):
     def list_hypervisors(self):
         cloud_info = {}
         hypervisors = self.cloud.read_hypervisor_info()
-        servers = self.cloud.read_server_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
+        servers = self.cloud.read_server_info()
+        logging.info('### Server list .. %s', servers)
+        server_ips = self.cloud.get_server_ips()
+        logging.info('### Server ips .. %s', server_ips)
+
         for k, v in hypervisors.items():
             cloud_info[k] = v
-            cloud_info[k]['servers'][print_server_hypervisor_info(servers, k)] = {}
+            server_id = [print_server_hypervisor_info(servers, k)]
+            cloud_info[k]['servers'][server_id] = {}
+            cloud_info[k]['servers'][server_id] =
+
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
 
@@ -63,7 +70,7 @@ class Cloud(object):
         logging.info('Reading info of all servers %s', server_info)
         return server_info
 
-    def merge_server_info(self):
+    def get_server_ips(self):
         servers = self.novaclient.get_servers()
         ips = {}
         for server in servers:
