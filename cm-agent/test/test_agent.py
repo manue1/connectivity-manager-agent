@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import logging
-from core.agent import Agent, Cloud
+from core.agent import *
 
 __author__ = 'beb'
 
@@ -19,14 +19,14 @@ if __name__ == '__main__':
 
     hypervisors = agent.list_hypervisors()
 
-    #servers = agent.list_servers()
+    #servers = agent.cloud.read_server_info()
 
-    #matches = agent.print_server_hypervisor(servers)
+    #matches = print_server_hypervisor_info(servers, 'control')
 
     #serverips = agent.cloud.merge_server_info()
 
-    neutronport = agent.cloud.get_neutron_port('172.24.4.3')
+    #neutronport = agent.cloud.get_neutron_port('172.24.4.3')
 
-    interfaces = agent.host.list_interfaces_hypervisor('control', hypervisors)
+    #interfaces = agent.cloud.list_interfaces_hypervisor('control', hypervisors)
 
-    port_info = agent.host.read_port_info(interfaces, neutronport)
+    #port_info = read_port_info(interfaces, neutronport)

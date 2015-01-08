@@ -14,24 +14,17 @@ class Agent(object):
 
     def __init__(self):
         self.cloud = Cloud()
-        self.host = Host()
 
     def list_hypervisors(self):
+        cloud_info = {}
         hypervisors = self.cloud.read_hypervisor_info()
-        logging.info('Getting list of hypervisors .. %s', hypervisors)
-        return hypervisors
-
-    def list_servers(self):
         servers = self.cloud.read_server_info()
-        logging.info('Getting list of all servers .. %s', servers)
-        return servers
-
-    def print_server_hypervisor(self, serv):
-        server_match = {}
-        for servers in serv.values():
-            server_match[servers['OS-EXT-SRV-ATTR:hypervisor_hostname']] = servers['hostId']
-        logging.info('Getting servers for matching hypervisor %s: %s', server_match, serv)
-        return server_match
+        logging.info('Getting list of hypervisors .. %s', hypervisors)
+        for k, v in hypervisors.items():
+            cloud_info[k] = v
+            cloud_info[k]['servers'] = print_server_hypervisor_info(servers, k)
+        logging.info('Cloud info .. %s', cloud_info)
+        return hypervisors
 
     def list_qoss(self):
         pass
@@ -43,6 +36,8 @@ class Cloud(object):
         self.endpoint = self.keystoneclient.get_endpoint(service_type='network', endpoint_type=None)
         self.novaclient = NovaClient()
         self.neutronclient = NeutronClient(self.endpoint, self.keystoneclient.get_token())
+        self.ovsclient = OVSClient()
+
 
     def read_hypervisor_info(self):
         host_info = {}
@@ -72,27 +67,14 @@ class Cloud(object):
         servers = self.novaclient.get_servers()
         ips = {}
         for server in servers:
-            ips = self.get_server_ip(server)
+            ips = get_server_ip(server)
             logging.info('Getting IP %s for server %s', ips, server)
-        return ips
-
-    def get_server_ip(self, server):
-        ips = []
-        if hasattr(server, 'addresses'):
-            for interface in server.addresses.values():
-                ips.append(interface[0]['addr'])
         return ips
 
     def get_neutron_port(self, ip):
         port = self.neutronclient.get_ports(ip)
         logging.info('Getting Neutron port ID %s for IP %s', port, ip)
         return port
-
-
-class Host(object):
-
-    def __init__(self):
-        self.ovsclient = OVSClient()
 
     def list_interfaces_hypervisor(self, hypervisor, hypervisors):
         interfaces = {}
@@ -105,13 +87,25 @@ class Host(object):
                         logging.info('Getting OVS interfaces %s for IP %s', interfaces, ip)
         return interfaces
 
-    def read_port_info(self, interfaces, server_port):
-        end = re.search(server_port, interfaces).start()
-        start = end - 75
-        ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])
-        logging.info('Getting OVS port: %s, for Neutron Port ID: %s', ovs_port, server_port)
-        return ovs_port
 
-    
-class QoS(object):
-    pass
+def get_server_ip(server):
+    ips = []
+    if hasattr(server, 'addresses'):
+        for interface in server.addresses.values():
+            ips.append(interface[0]['addr'])
+    return ips
+
+def print_server_hypervisor_info(serv, hypervisor):
+    server_match = []
+    for servers in serv.values():
+        if servers['OS-EXT-SRV-ATTR:hypervisor_hostname'] == hypervisor:
+            server_match.append(servers['hostId'])
+    logging.info('Getting servers for matching hypervisor: %s', server_match)
+    return server_match
+
+def read_port_info(interfaces, server_port):
+    end = re.search(server_port, interfaces).start()
+    start = end - 75
+    ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])
+    logging.info('Getting OVS port: %s, for Neutron Port ID: %s', ovs_port, server_port)
+    return ovs_port
