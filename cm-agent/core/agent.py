@@ -22,7 +22,7 @@ class Agent(object):
         logging.info('Getting list of hypervisors .. %s', hypervisors)
         for k, v in hypervisors.items():
             cloud_info[k] = v
-            cloud_info[k]['servers'] = print_server_hypervisor_info(servers, k)
+            cloud_info[k]['servers'][print_server_hypervisor_info(servers, k)] = {}
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
 
