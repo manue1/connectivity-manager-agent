@@ -17,6 +17,7 @@ class Agent(object):
 
     def list_hypervisors(self):
         cloud_info = {}
+        interfaces = {}
         hypervisors = self.cloud.read_hypervisor_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
         servers = self.cloud.read_server_info()
@@ -25,10 +26,13 @@ class Agent(object):
         logging.info('Getting list of servers matched with hypervisor .. %s', hypervisors_servers)
         server_ips = self.cloud.get_server_ips()
         logging.info('Getting list of all server IPs.. %s', server_ips)
-        
+
         for kh, vh in hypervisors.items():
             cloud_info[kh] = vh
             cloud_info[kh]['servers'] = {}
+            logging.info('########################')
+            interfaces[kh] = Host(kh).list_interfaces_hypervisor(hypervisors)
+            logging.info('Interfaces for %s : %s ... ', kh, interfaces)
             for khs, vhs in hypervisors_servers.items():
                 if kh == khs:
                     cloud_info[kh]['servers'][vhs] = {}
@@ -38,8 +42,9 @@ class Agent(object):
                             for ki, vi in server_ips.items():
                                 if ki == vhs:
                                     cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
-                                    cloud_info[kh]['servers'][vhs]['neutron_port'] = self.cloud.get_neutron_port(vi[0])
-
+                                    neutron_port_id = self.cloud.get_neutron_port(vi[0])
+                                    cloud_info[kh]['servers'][vhs]['neutron_port'] = neutron_port_id
+                                    cloud_info[kh]['servers'][vhs]['ovs_port_id'] = get_port_id(interfaces[kh], neutron_port_id)[0]
 
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
@@ -54,8 +59,6 @@ class Cloud(object):
         self.endpoint = self.keystoneclient.get_endpoint(service_type='network', endpoint_type=None)
         self.novaclient = NovaClient()
         self.neutronclient = NeutronClient(self.endpoint, self.keystoneclient.get_token())
-        self.ovsclient = OVSClient()
-
 
     def read_hypervisor_info(self):
         host_info = {}
@@ -94,11 +97,20 @@ class Cloud(object):
         logging.info('Getting Neutron port ID %s for IP %s', port, ip)
         return port
 
-    def list_interfaces_hypervisor(self, hypervisor, hypervisors):
+
+class Host(object):
+    def __init__(self, hypervisor):
+        self.hypervisor = hypervisor
+        self.ovsclient = OVSClient()
+
+    def list_interfaces_hypervisor(self, hypervisors):
         interfaces = {}
         for k,v in hypervisors.items():
-            if k == hypervisor:
+            #logging.info('########################')
+            #logging.info('### k: %s v: %s', k, v)
+            if k == self.hypervisor:
                 for k_inner, v_inner in v.items():
+                    #logging.info('### k_inner: %s v_inner: %s', k_inner, v_inner)
                     if k_inner == 'ip':
                         ip = v_inner
                         interfaces = self.ovsclient.list_interfaces(ip)
