@@ -10,8 +10,8 @@ from clients.ovs import Client as OVSClient
 
 __author__ = 'beb'
 
-class Agent(object):
 
+class Agent(object):
     def __init__(self):
         self.cloud = Cloud()
 
@@ -29,8 +29,8 @@ class Agent(object):
 
         for kh, vh in hypervisors.items():
             cloud_info[kh] = vh
+            logging.info('### vh: %s', vh.get('ip'))
             cloud_info[kh]['servers'] = {}
-            logging.info('########################')
             interfaces[kh] = Host(kh).list_interfaces_hypervisor(hypervisors)
             logging.info('Interfaces for %s : %s ... ', kh, interfaces)
             for khs, vhs in hypervisors_servers.items():
@@ -44,7 +44,10 @@ class Agent(object):
                                     cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
                                     neutron_port_id = self.cloud.get_neutron_port(vi[0])
                                     cloud_info[kh]['servers'][vhs]['neutron_port'] = neutron_port_id
-                                    cloud_info[kh]['servers'][vhs]['ovs_port_id'] = get_port_id(interfaces[kh], neutron_port_id)[0]
+                                    cloud_info[kh]['servers'][vhs]['ovs_port_id'] = get_port_id(interfaces[kh],
+                                                                                                neutron_port_id)[0]
+                                    cloud_info[kh]['servers'][vhs]['qos'] = {}
+                                    cloud_info[kh]['servers'][vhs]['qos'] = Host(kh).list_qos_hypervisor(vh.get('ip'))
 
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
@@ -103,19 +106,22 @@ class Host(object):
         self.hypervisor = hypervisor
         self.ovsclient = OVSClient()
 
+    # ToDO: Use hypervisor IP as input instead, can save one for?!
     def list_interfaces_hypervisor(self, hypervisors):
         interfaces = {}
-        for k,v in hypervisors.items():
-            #logging.info('########################')
-            #logging.info('### k: %s v: %s', k, v)
+        for k, v in hypervisors.items():
             if k == self.hypervisor:
                 for k_inner, v_inner in v.items():
-                    #logging.info('### k_inner: %s v_inner: %s', k_inner, v_inner)
                     if k_inner == 'ip':
                         ip = v_inner
                         interfaces = self.ovsclient.list_interfaces(ip)
                         logging.info('Getting OVS interfaces %s for IP %s', interfaces, ip)
         return interfaces
+
+    def list_qos_hypervisor(self, hypervisor_ip):
+        qos = self.ovsclient.list_qos(hypervisor_ip)
+        logging.info('Getting OVS QoS %s for IP %s', qos, hypervisor_ip)
+        return qos
 
 
 def get_server_ip(server):
@@ -125,12 +131,14 @@ def get_server_ip(server):
             ips.append(interface[0]['addr'])
     return ips
 
+
 def get_server_hypervisor_info(servers):
     server_match = {}
     for server in servers.values():
-            server_match[server['OS-EXT-SRV-ATTR:hypervisor_hostname']] = server['hostId']
+        server_match[server['OS-EXT-SRV-ATTR:hypervisor_hostname']] = server['hostId']
     logging.info('Getting servers for matching hypervisor: %s', server_match)
     return server_match
+
 
 def get_port_id(interfaces, server_port):
     end = re.search(server_port, interfaces).start()

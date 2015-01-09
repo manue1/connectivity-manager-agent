@@ -31,3 +31,7 @@ if __name__ == '__main__':
     #interfaces = agent.cloud.list_interfaces_hypervisor('control', hypervisors)
 
     #port_info = get_port_id(interfaces, neutronport)
+
+    # Test QoS
+    #host = Host('control')
+    #qos = agent.host.list_qos_hypervisor('192.168.120.15')
