@@ -35,3 +35,8 @@ if __name__ == '__main__':
     # Test QoS
     #host = Host('control')
     #qos = agent.host.list_qos_hypervisor('192.168.120.15')
+
+    # Test get port for QoS
+    #host = Host('control')
+    #ports = host.list_ports_hypervisor('192.168.120.15')
+    #qoss = host.list_qos_hypervisor('192.168.120.15')

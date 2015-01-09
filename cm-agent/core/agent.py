@@ -18,6 +18,8 @@ class Agent(object):
     def list_hypervisors(self):
         cloud_info = {}
         interfaces = {}
+        ports = {}
+        qoss = {}
         hypervisors = self.cloud.read_hypervisor_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
         servers = self.cloud.read_server_info()
@@ -33,6 +35,10 @@ class Agent(object):
             cloud_info[kh]['servers'] = {}
             interfaces[kh] = Host(kh).list_interfaces_hypervisor(hypervisors)
             logging.info('Interfaces for %s : %s ... ', kh, interfaces)
+            ports[kh] = Host(kh).list_ports_hypervisor(vh.get('ip'))
+            logging.info('Ports for %s : %s ... ', kh, ports)
+            qoss[kh] = get_qos(Host(kh).list_qos_hypervisor(vh.get('ip')))
+            logging.info('QoS\'s for %s : %s ... ', kh, qoss)
             for khs, vhs in hypervisors_servers.items():
                 if kh == khs:
                     cloud_info[kh]['servers'][vhs] = {}
@@ -43,11 +49,14 @@ class Agent(object):
                                 if ki == vhs:
                                     cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
                                     neutron_port_id = self.cloud.get_neutron_port(vi[0])
+                                    ovs_port_id = get_port_id(interfaces[kh], neutron_port_id)[0]
                                     cloud_info[kh]['servers'][vhs]['neutron_port'] = neutron_port_id
-                                    cloud_info[kh]['servers'][vhs]['ovs_port_id'] = get_port_id(interfaces[kh],
-                                                                                                neutron_port_id)[0]
+                                    cloud_info[kh]['servers'][vhs]['ovs_port_id'] = ovs_port_id
                                     cloud_info[kh]['servers'][vhs]['qos'] = {}
-                                    cloud_info[kh]['servers'][vhs]['qos'] = Host(kh).list_qos_hypervisor(vh.get('ip'))
+                                    #for kq, vq in qoss[kh].data.items():
+                                    #    logging.info('### kq: %s vq: %s ... ', kq, vq)
+
+                                    #cloud_info[kh]['servers'][vhs]['qos'] = get_port_qos(ports[kh])
 
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
@@ -115,13 +124,31 @@ class Host(object):
                     if k_inner == 'ip':
                         ip = v_inner
                         interfaces = self.ovsclient.list_interfaces(ip)
-                        logging.info('Getting OVS interfaces %s for IP %s', interfaces, ip)
+        logging.info('Getting OVS interfaces %s :', interfaces)
         return interfaces
+
+    def list_ports_hypervisor(self, hypervisor_ip):
+        ports = self.ovsclient.list_ports(hypervisor_ip)
+        logging.info('Getting OVS ports: %s for Hypervisor IP: %s', ports, hypervisor_ip)
+        return ports
 
     def list_qos_hypervisor(self, hypervisor_ip):
         qos = self.ovsclient.list_qos(hypervisor_ip)
         logging.info('Getting OVS QoS %s for IP %s', qos, hypervisor_ip)
         return qos
+
+
+def get_qos(qos_raw):
+
+    _qos_raw = qos_raw.split(',')
+    logging.info('#### QoS SPLIT: %s ', _qos_raw)
+    #before_keyword, keyword, after_keyword = qos_raw.partition(keyword)
+    #logging.info('#### QoS after keyword', after_keyword)
+    #qos_uuid_start = re.search(keyword, qos_raw).end()
+    #logging.info('#### QoS start uuid', qos_uuid_start)
+    #qoss_uuids.append(qos_raw[qos_uuid_start:(qos_uuid_start + 36)])
+    #logging.info('#### QoS', qoss_uuids)
+    # return qoss
 
 
 def get_server_ip(server):
@@ -146,3 +173,13 @@ def get_port_id(interfaces, server_port):
     ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])
     logging.info('Getting OVS port: %s, for Neutron Port ID: %s', ovs_port, server_port)
     return ovs_port
+
+
+def get_port_qos(ports, qos):
+    port_qos = {}
+    end = re.search(qos, ports).start()
+    start = end - 37
+    ovs_port = re.findall("(qvo.*?[^\'])\"", ports[start:end])
+    port_qos[ovs_port] = qos
+    logging.info('Getting OVS QoS for Port: %s', port_qos)
+    return port_qos

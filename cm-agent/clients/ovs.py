@@ -23,7 +23,7 @@ class Client(object):
         subprocess.check_call(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "set", "port", "%s" % port_id, "%s=%s" % (action, action_id)])
 
     def list_ports(self, host_ip):
-        ports = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "list", "port"])
+        ports = subprocess.check_output(["sudo", "ovs-vsctl", "--format=json", "--db=tcp:%s:6640" % host_ip, "list", "port"])
         return ports
 
     def list_interfaces(self, host_ip):
@@ -38,7 +38,7 @@ class Client(object):
         subprocess.check_call(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "destroy", "queue", "%s" % queue_id])
 
     def list_queue(self, host_ip):
-        queues = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "list", "queue"])
+        queues = subprocess.check_output(["sudo", "ovs-vsctl", "--format=json", "--db=tcp:%s:6640" % host_ip, "list", "queue"])
         return queues
 
     def create_qos(self, host_ip, queue_in, queue_out):
@@ -49,5 +49,5 @@ class Client(object):
         subprocess.check_call(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "destroy", "qos", "%s" % qos_id])
 
     def list_qos(self, host_ip):
-        qoss = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "list", "qos"])
+        qoss = subprocess.check_output(["sudo", "ovs-vsctl", "--format=json", "--db=tcp:%s:6640" % host_ip, "--columns=_uuid,queues,type", "list", "qos"])
         return qoss
