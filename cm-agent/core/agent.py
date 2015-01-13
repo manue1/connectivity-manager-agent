@@ -144,8 +144,10 @@ class Host(object):
         return ports
 
     def list_qos_hypervisor(self, hypervisor_ip):
-        qos_raw = json.loads(self.ovsclient.list_qos(hypervisor_ip))
         qos = {'queues': {}}
+        qos_raw = json.loads(self.ovsclient.list_qos(hypervisor_ip))
+        queues_raw = json.loads(self.ovsclient.list_queue(hypervisor_ip))
+        queues = self.get_queue_rates(queues_raw)
 
         for q in qos_raw.get('data'):
             for item in q:
@@ -157,15 +159,40 @@ class Host(object):
                             qos['uuid'] = item[1]
                         if li == 'map':
                             for item_inner in item:
-                                if type(item_inner) == list:
-                                    if item_inner[0][0] == 0:
-                                        qos['queues'][0] = {}
-                                        for i, queue_inner in enumerate(item_inner[0][1]):
-                                            if queue_inner != 'uuid':
-                                                qos['queues'][0]['uuid'] = queue_inner
+                                if type(item_inner) == list and item_inner[0][0] == 0:
+                                    qos['queues'][0] = {}
+                                    for queue_inner in item_inner[0][1]:
+                                        if queue_inner != 'uuid':
+                                            qos['queues'][0]['uuid'] = queue_inner
+                                            for q in queues:
+                                                if queue_inner == q.uuid:
+                                                    qos['queues'][0] = q.get('rates')
+
 
         logging.info('Getting final OVS QoS %s for IP %s', qos, hypervisor_ip)
         return qos
+
+    def get_queue_rates(self, queues):
+        queue_rates = {}
+        logging.info('Queues: %s of type: %s', queues)
+
+        for q in queues.get('data'):
+            for item in q:
+                for li in item:
+                    if item[0] == 'uuid':
+                        queue_rates['uuid'] = item[1]
+                    if li == 'map':
+                        for item_inner in item:
+                            if type(item_inner) == list and len(item_inner) > 0:
+                                for rate_inner in item_inner:
+                                    if rate_inner[0] == 'max-rate':
+                                        logging.info('max')
+                                        queue_rates['rates'] = {}
+                                        queue_rates['rates']['max-rate'] = rate_inner[1]
+                                    if rate_inner[0] == 'min-rate':
+                                        queue_rates['rates']['min-rate'] = rate_inner[1]
+        logging.info('Queue port rates: %s', queue_rates)
+        return queue_rates
 
 
 def get_server_ip(server):
@@ -192,3 +219,5 @@ def get_port_qos(ports, qos):
     port_qos[ovs_port] = qos
     logging.info('Getting OVS QoS for Port: %s', port_qos)
     return port_qos
+
+
