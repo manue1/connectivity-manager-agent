@@ -20,43 +20,46 @@ class Agent(object):
         interfaces = {}
         ports = {}
         qoss = {}
+        hypervisors_servers = {}
         hypervisors = self.cloud.read_hypervisor_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
         servers = self.cloud.read_server_info()
         logging.info('Getting list of servers .. %s', servers)
-        hypervisors_servers = get_server_hypervisor_info(servers)
-        logging.info('Getting list of servers matched with hypervisor .. %s', hypervisors_servers)
+
         server_ips = self.cloud.get_server_ips()
         logging.info('Getting list of all server IPs.. %s', server_ips)
 
         for kh, vh in hypervisors.items():
-            cloud_info[kh] = vh
             logging.info('### vh: %s', vh.get('ip'))
+            cloud_info[kh] = vh
             cloud_info[kh]['servers'] = {}
+
+            hypervisors_servers[kh] = Host(kh).get_server_hypervisor_info(servers, kh)
+            logging.info('Getting list of servers matched with hypervisor .. %s', hypervisors_servers)
+
             interfaces[kh] = Host(kh).list_interfaces_hypervisor(hypervisors)
             logging.info('Interfaces for %s : %s ... ', kh, interfaces)
             ports[kh] = Host(kh).list_ports_hypervisor(vh.get('ip'))
             logging.info('Ports for %s : %s ... ', kh, ports)
             qoss[kh] = get_qos(Host(kh).list_qos_hypervisor(vh.get('ip')))
             logging.info('QoS\'s for %s : %s ... ', kh, qoss)
-            for khs, vhs in hypervisors_servers.items():
-                if kh == khs:
-                    cloud_info[kh]['servers'][vhs] = {}
-                    for ks, vs in servers.items():
-                        if ks == vhs:
-                            cloud_info[kh]['servers'][vhs]['name'] = vs.get('name')
-                            for ki, vi in server_ips.items():
-                                if ki == vhs:
-                                    cloud_info[kh]['servers'][vhs]['ip'] = vi[0]
-                                    neutron_port_id = self.cloud.get_neutron_port(vi[0])
-                                    ovs_port_id = get_port_id(interfaces[kh], neutron_port_id)[0]
-                                    cloud_info[kh]['servers'][vhs]['neutron_port'] = neutron_port_id
-                                    cloud_info[kh]['servers'][vhs]['ovs_port_id'] = ovs_port_id
-                                    cloud_info[kh]['servers'][vhs]['qos'] = {}
-                                    #for kq, vq in qoss[kh].data.items():
-                                    #    logging.info('### kq: %s vq: %s ... ', kq, vq)
+            for hs in hypervisors_servers[kh]:
+                cloud_info[kh]['servers'][hs] = {}
+                for ks, vs in servers.items():
+                    if ks == hs:
+                        cloud_info[kh]['servers'][hs]['name'] = vs.get('name')
+                        for ki, vi in server_ips.items():
+                            if ki == hs:
+                                cloud_info[kh]['servers'][hs]['ip'] = vi[0]
+                                neutron_port_id = self.cloud.get_neutron_port(vi[0])
+                                ovs_port_id = get_port_id(interfaces[kh], neutron_port_id)[0]
+                                cloud_info[kh]['servers'][hs]['neutron_port'] = neutron_port_id
+                                cloud_info[kh]['servers'][hs]['ovs_port_id'] = ovs_port_id
+                                cloud_info[kh]['servers'][hs]['qos'] = {}
+                                #for kq, vq in qoss[kh].data.items():
+                                #    logging.info('### kq: %s vq: %s ... ', kq, vq)
 
-                                    #cloud_info[kh]['servers'][vhs]['qos'] = get_port_qos(ports[kh])
+                                #cloud_info[kh]['servers'][vhs]['qos'] = get_port_qos(ports[kh])
 
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
@@ -127,6 +130,14 @@ class Host(object):
         logging.info('Getting OVS interfaces %s :', interfaces)
         return interfaces
 
+    def get_server_hypervisor_info(self, servers, hostname):
+        server_match = []
+        for server in servers.values():
+            if server['OS-EXT-SRV-ATTR:hypervisor_hostname'] == hostname:
+                server_match.append(server['id'])
+        logging.info('Getting servers for matching hypervisor %s: %s', hostname, server_match)
+        return server_match
+
     def list_ports_hypervisor(self, hypervisor_ip):
         ports = self.ovsclient.list_ports(hypervisor_ip)
         logging.info('Getting OVS ports: %s for Hypervisor IP: %s', ports, hypervisor_ip)
@@ -157,14 +168,6 @@ def get_server_ip(server):
         for interface in server.addresses.values():
             ips.append(interface[0]['addr'])
     return ips
-
-
-def get_server_hypervisor_info(servers):
-    server_match = {}
-    for server in servers.values():
-        server_match[server['OS-EXT-SRV-ATTR:hypervisor_hostname']] = server['id']
-    logging.info('Getting servers for matching hypervisor: %s', server_match)
-    return server_match
 
 
 def get_port_id(interfaces, server_port):
