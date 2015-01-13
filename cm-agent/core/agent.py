@@ -20,6 +20,7 @@ class Agent(object):
         interfaces = {}
         ports = {}
         qoss = {}
+        queue_rates = {}
         hypervisors_servers = {}
         hypervisors = self.cloud.read_hypervisor_info()
         logging.info('Getting list of hypervisors .. %s', hypervisors)
@@ -41,8 +42,11 @@ class Agent(object):
             logging.info('Interfaces for %s : %s ... ', kh, interfaces)
             ports[kh] = Host(kh).list_ports_hypervisor(vh.get('ip'))
             logging.info('Ports for %s : %s ... ', kh, ports)
-            qoss[kh] = Host(kh).list_qos_hypervisor(vh.get('ip'))
+            queue_rates[kh] = Host(kh).get_queue_rates(vh.get('ip'))
+            logging.info('Queues for %s : %s ... ', kh, queue_rates)
+            qoss[kh] = Host(kh).list_qos_hypervisor(vh.get('ip'), queue_rates[kh])
             logging.info('QoS\'s for %s : %s ... ', kh, qoss)
+
             for hs in hypervisors_servers[kh]:
                 cloud_info[kh]['servers'][hs] = {}
                 for ks, vs in servers.items():
@@ -143,11 +147,10 @@ class Host(object):
         logging.info('Getting OVS ports: %s for Hypervisor IP: %s', ports, hypervisor_ip)
         return ports
 
-    def list_qos_hypervisor(self, hypervisor_ip):
+    def list_qos_hypervisor(self, hypervisor_ip, queue_rates):
         qos = {'queues': {}}
         qos_raw = json.loads(self.ovsclient.list_qos(hypervisor_ip))
-        queues_raw = json.loads(self.ovsclient.list_queue(hypervisor_ip))
-        queues = self.get_queue_rates(queues_raw)
+        status = 0
 
         for q in qos_raw.get('data'):
             for item in q:
@@ -164,16 +167,20 @@ class Host(object):
                                     for queue_inner in item_inner[0][1]:
                                         if queue_inner != 'uuid':
                                             qos['queues'][0]['uuid'] = queue_inner
-                                            for q in queues:
-                                                if queue_inner == q.uuid:
-                                                    qos['queues'][0] = q.get('rates')
-
+                                            for qk, qv in queue_rates.items():
+                                                logging.info('####### qk: %s qv: %s', qk, qv)
+                                                if qk == 'uuid' and qv == queue_inner:
+                                                    status = 1
+                                                if qk == 'rates' and status:
+                                                    qos['queues'][0]['rates'] = qv
+                                            logging.info('##### Queue rates with qos %s', qos)
 
         logging.info('Getting final OVS QoS %s for IP %s', qos, hypervisor_ip)
         return qos
 
-    def get_queue_rates(self, queues):
+    def get_queue_rates(self, hypervisor_ip):
         queue_rates = {}
+        queues = json.loads(self.ovsclient.list_queue(hypervisor_ip))
         logging.info('Queues: %s of type: %s', queues)
 
         for q in queues.get('data'):
