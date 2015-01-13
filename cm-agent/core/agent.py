@@ -41,7 +41,7 @@ class Agent(object):
             logging.info('Interfaces for %s : %s ... ', kh, interfaces)
             ports[kh] = Host(kh).list_ports_hypervisor(vh.get('ip'))
             logging.info('Ports for %s : %s ... ', kh, ports)
-            qoss[kh] = get_qos(Host(kh).list_qos_hypervisor(vh.get('ip')))
+            qoss[kh] = Host(kh).list_qos_hypervisor(vh.get('ip'))
             logging.info('QoS\'s for %s : %s ... ', kh, qoss)
             for hs in hypervisors_servers[kh]:
                 cloud_info[kh]['servers'][hs] = {}
@@ -55,7 +55,7 @@ class Agent(object):
                                 ovs_port_id = get_port_id(interfaces[kh], neutron_port_id)[0]
                                 cloud_info[kh]['servers'][hs]['neutron_port'] = neutron_port_id
                                 cloud_info[kh]['servers'][hs]['ovs_port_id'] = ovs_port_id
-                                cloud_info[kh]['servers'][hs]['qos'] = {}
+                                cloud_info[kh]['servers'][hs]['qos'] = qoss[kh]
                                 #for kq, vq in qoss[kh].data.items():
                                 #    logging.info('### kq: %s vq: %s ... ', kq, vq)
 
@@ -144,42 +144,28 @@ class Host(object):
         return ports
 
     def list_qos_hypervisor(self, hypervisor_ip):
-        qos = self.ovsclient.list_qos(hypervisor_ip)
-        _qos = {}
-        _qos['queues'] = {}
-        _qos_raw = json.loads(qos)
-        logging.info('##### JSON LOADS QOS %s', _qos_raw)
+        qos_raw = json.loads(self.ovsclient.list_qos(hypervisor_ip))
+        qos = {'queues': {}}
 
-        for q in _qos_raw.get('data'):
+        for q in qos_raw.get('data'):
             for item in q:
                 if type(item) == unicode:
-                    _qos['type'] = item
+                    qos['type'] = item
                 else:
                     for li in item:
                         if item[0] == 'uuid':
-                            _qos['uuid'] = item[1]
-                        elif item[0] == 'map':
-                            logging.info('##### map li %s in item %s', li, item)
-                            #for queue in item[0]['']:
-                            #    logging.info('##### queue %s in item %s', queue, item)
+                            qos['uuid'] = item[1]
+                        if li == 'map':
+                            for item_inner in item:
+                                if type(item_inner) == list:
+                                    if item_inner[0][0] == 0:
+                                        qos['queues'][0] = {}
+                                        for i, queue_inner in enumerate(item_inner[0][1]):
+                                            if queue_inner != 'uuid':
+                                                qos['queues'][0]['uuid'] = queue_inner
 
-
-        logging.info('###### Getting final OVS QoS %s for IP %s', _qos, hypervisor_ip)
-        logging.info('Getting OVS QoS %s for IP %s', qos, hypervisor_ip)
+        logging.info('Getting final OVS QoS %s for IP %s', qos, hypervisor_ip)
         return qos
-
-
-def get_qos(qos_raw):
-
-    _qos_raw = qos_raw.split(',')
-    logging.info('#### QoS SPLIT: %s ', _qos_raw)
-    #before_keyword, keyword, after_keyword = qos_raw.partition(keyword)
-    #logging.info('#### QoS after keyword', after_keyword)
-    #qos_uuid_start = re.search(keyword, qos_raw).end()
-    #logging.info('#### QoS start uuid', qos_uuid_start)
-    #qoss_uuids.append(qos_raw[qos_uuid_start:(qos_uuid_start + 36)])
-    #logging.info('#### QoS', qoss_uuids)
-    # return qoss
 
 
 def get_server_ip(server):
