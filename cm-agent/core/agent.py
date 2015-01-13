@@ -68,7 +68,8 @@ class Agent(object):
         logging.info('Cloud info .. %s', cloud_info)
         return hypervisors
 
-    def list_qoss(self):
+    def set_qos(self):
+
         pass
 
 
