@@ -103,7 +103,7 @@ class Cloud(object):
         servers = self.novaclient.get_servers()
         ips = {}
         for server in servers:
-            ips[server.hostId] = get_server_ip(server)
+            ips[server.id] = get_server_ip(server)
         logging.info('All server IPs %s', ips)
         return ips
 
@@ -145,6 +145,26 @@ class Host(object):
 
     def list_qos_hypervisor(self, hypervisor_ip):
         qos = self.ovsclient.list_qos(hypervisor_ip)
+        _qos = {}
+        _qos['queues'] = {}
+        _qos_raw = json.loads(qos)
+        logging.info('##### JSON LOADS QOS %s', _qos_raw)
+
+        for q in _qos_raw.get('data'):
+            for item in q:
+                if type(item) == unicode:
+                    _qos['type'] = item
+                else:
+                    for li in item:
+                        if item[0] == 'uuid':
+                            _qos['uuid'] = item[1]
+                        elif item[0] == 'map':
+                            logging.info('##### map li %s in item %s', li, item)
+                            #for queue in item[0]['']:
+                            #    logging.info('##### queue %s in item %s', queue, item)
+
+
+        logging.info('###### Getting final OVS QoS %s for IP %s', _qos, hypervisor_ip)
         logging.info('Getting OVS QoS %s for IP %s', qos, hypervisor_ip)
         return qos
 
