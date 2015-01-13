@@ -91,8 +91,8 @@ class Cloud(object):
         server_info = {}
         servers = self.novaclient.get_servers()
         for server in servers:
-            server_info[server.hostId] = {}
-            server_info[server.hostId] = server._info
+            server_info[server.id] = {}
+            server_info[server.id] = server._info
         logging.info('Reading info of all servers %s', server_info)
         return server_info
 
@@ -162,7 +162,7 @@ def get_server_ip(server):
 def get_server_hypervisor_info(servers):
     server_match = {}
     for server in servers.values():
-        server_match[server['OS-EXT-SRV-ATTR:hypervisor_hostname']] = server['hostId']
+        server_match[server['OS-EXT-SRV-ATTR:hypervisor_hostname']] = server['id']
     logging.info('Getting servers for matching hypervisor: %s', server_match)
     return server_match
 
