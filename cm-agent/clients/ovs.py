@@ -4,6 +4,7 @@ import subprocess
 
 __author__ = 'beb'
 
+
 class Client(object):
 
     def exe_vsctl(self, args):
