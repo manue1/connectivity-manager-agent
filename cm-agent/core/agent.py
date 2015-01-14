@@ -32,7 +32,6 @@ class Agent(object):
         logging.info('Getting list of all server IPs: %s', server_ips)
 
         for kh, vh in hypervisors.items():
-            logging.info('### vh: %s', vh.get('ip'))
             cloud_info[kh] = vh
             cloud_info[kh]['servers'] = {}
 
@@ -124,7 +123,6 @@ class Host(object):
         self.hypervisor = hypervisor
         self.ovsclient = OVSClient()
 
-    # ToDO: Use hypervisor IP as input instead, can save one for?!
     def list_interfaces_hypervisor(self, hypervisors):
         interfaces = {}
         for k, v in hypervisors.items():

@@ -31,10 +31,9 @@ class Application:
         self._app.route('/', method="GET", callback=self._welcome)
 
         # Hypervisor methods
-
         self._app.route('/hosts', method="GET", callback=self._hosts_list)
 
-        # ToDo: QoS methods
+        # QoS methods
         #self._app.route('/qoses', method="GET", callback=self._qoses_list)
         #self._app.route('/qoses', method="POST", callback=self._qoses_set)
 
@@ -50,8 +49,6 @@ class Application:
         """
         List all OpenStack hypervisors
         """
-        self.agent = CMAgent()
-
         hypervisors = self.agent.list_hypervisors()
 
         response.body = encode_dict_json(hypervisors)
@@ -61,6 +58,8 @@ class Application:
         response.content_type = 'application/json'
         return response
 
+    def _qoses_set(self):
+        pass
 
 if __name__ == '__main__':
     server = Application(host='0.0.0.0', port=8091)

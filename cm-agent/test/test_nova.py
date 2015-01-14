@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     hypervisors = client.get_hypervisors()
     for hypervisor in hypervisors:
-        print hypervisor
+        print hypervisor._info
 
     servers = client.get_servers()
     for server in servers:

@@ -17,15 +17,14 @@ if __name__ == '__main__':
 
     agent = Agent()
 
-    # This test includes all others that are part of the hypervisor listing
+    # ------------------
+    # Test listing Hypervisors including their VMs & QoS:
+    # ------------------
     hypervisors = agent.list_hypervisors()
 
-    #servers = agent.cloud.read_server_info()
-    #hypervisors_servers = get_server_hypervisor_info(servers)
-    #server_ips = agent.cloud.get_server_ips()
-    #neutronport = agent.cloud.get_neutron_port('172.24.4.3')
-    #interfaces = agent.cloud.list_interfaces_hypervisor('control', hypervisors)
-    #port_info = get_port_id(interfaces, neutronport)
+    # ------------------
+    # Test setting QoS for VM:
+    # ------------------
 
     # Test QoS
     #host = Host('control')

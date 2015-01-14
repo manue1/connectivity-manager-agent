@@ -39,7 +39,7 @@ class Client(object):
         queue_id = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "create", "queue",
                                             "other-config:min-rate=%d" % min_rate,
                                             "other-config:max-rate=%d" % max_rate])
-        return queue_id
+        return queue_id.strip('\n')
 
     def del_queue(self, host_ip, queue_id):
         subprocess.check_call(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "destroy", "queue", "%s" % queue_id])
@@ -52,7 +52,7 @@ class Client(object):
     def create_qos(self, host_ip, queue_id):
         qos_id = subprocess.check_output(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "create", "qos",
                                           "type=linux-htb", "queues=0=%s" % queue_id ])
-        return qos_id
+        return qos_id.strip('\n')
 
     def del_qos(self, host_ip, qos_id):
         subprocess.check_call(["sudo", "ovs-vsctl", "--db=tcp:%s:6640" % host_ip, "destroy", "qos", "%s" % qos_id])
