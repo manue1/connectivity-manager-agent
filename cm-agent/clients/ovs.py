@@ -27,7 +27,7 @@ class Client(object):
 
     def list_ports(self, host_ip):
         ports = subprocess.check_output(["sudo", "ovs-vsctl", "--format=json", "--db=tcp:%s:6640" % host_ip,
-                                         "list", "port"])
+                                         "--columns=name,qos,tag", "list", "port"])
         return ports
 
     def list_interfaces(self, host_ip):

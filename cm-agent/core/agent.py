@@ -42,9 +42,6 @@ class Agent(object):
             interfaces[kh] = Host(kh).list_interfaces_hypervisor(hypervisors)
             logging.info('Interfaces for %s : %s ... ', kh, interfaces)
 
-            ports[kh] = Host(kh).list_ports_hypervisor(vh.get('ip'))
-            logging.info('Ports for %s : %s ... ', kh, ports)
-
             queues[kh] = Host(kh).list_queues_hypervisor(vh.get('ip'))
             logging.info('Queues for %s : %s ... ', kh, queues)
 
@@ -66,7 +63,11 @@ class Agent(object):
                                 ovs_port_id = get_port_id(interfaces[kh], neutron_port_id)[0]
                                 cloud_info[kh]['servers'][hs]['neutron_port'] = neutron_port_id
                                 cloud_info[kh]['servers'][hs]['ovs_port_id'] = ovs_port_id
-                                cloud_info[kh]['servers'][hs]['qos'] = qoss[kh]
+                                qos_id = Host(kh).get_port_qos(vh.get('ip'), ovs_port_id)
+                                logging.info('#$#$#$ Got QoS ID: %s', qos_id)
+
+                                #cloud_info[kh]['servers'][hs]['qos'] = qoss[kh]
+
                                 #for kq, vq in qoss[kh].data.items():
                                 #    logging.info('### kq: %s vq: %s ... ', kq, vq)
 
@@ -197,11 +198,29 @@ class Host(object):
     def list_queues_hypervisor(self, hypervisor_ip):
         queues = []
         queues_raw = json.loads(self.ovsclient.list_queue(hypervisor_ip))
+        logging.info('Queues for comparison for %s : %s ... ', hypervisor_ip, queues_raw)
 
         for q in queues_raw.get('data'):
             queues.append(q)
         logging.info('Queues from queue list: %s', queues)
         return queues
+
+    def get_port_qos(self, hypervisor_ip, ovs_port):
+        ports_raw = json.loads(self.list_ports_hypervisor(hypervisor_ip))
+        logging.info('Ports for %s : %s ... ', hypervisor_ip, ports_raw)
+        qos_id = '0'
+        for port in ports_raw.get('data'):
+            isvm = 0
+            for port_key in port:
+                if type(port_key) == unicode and port_key == ovs_port:
+                    isvm = 1
+                if type(port_key) == list and isvm:
+                    for pv in port_key:
+                        if pv != 'uuid':
+                            qos_id = pv
+                            logging.info('QoS ID for port: %s is: %s', ovs_port, qos_id)
+        return qos_id
+
 
     def get_queue_rates(self, queue):
         queue_rates = {}
@@ -237,15 +256,4 @@ def get_port_id(interfaces, server_port):
     ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])
     logging.info('Getting OVS port: %s, for Neutron Port ID: %s', ovs_port, server_port)
     return ovs_port
-
-
-def get_port_qos(ports, qos):
-    port_qos = {}
-    end = re.search(qos, ports).start()
-    start = end - 37
-    ovs_port = re.findall("(qvo.*?[^\'])\"", ports[start:end])
-    port_qos[ovs_port] = qos
-    logging.info('Getting OVS QoS for Port: %s', port_qos)
-    return port_qos
-
 
