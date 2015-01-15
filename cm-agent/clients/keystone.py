@@ -6,16 +6,13 @@ __author__ = 'beb'
 
 USERNAME = 'admin'
 PASSWORD = 'pass'
-TENANT_NAME = 'demo'
+TENANT_NAME = 'admin'
 AUTH_URLv2 = 'http://192.168.120.15:5000/v2.0'
+
 
 class Client(object):
     def __init__(self):
-        creds = {}
-        creds['tenant_name'] = TENANT_NAME
-        creds['username'] = USERNAME
-        creds['password'] = PASSWORD
-        creds['auth_url'] = AUTH_URLv2
+        creds = {'tenant_name': TENANT_NAME, 'username': USERNAME, 'password': PASSWORD, 'auth_url': AUTH_URLv2}
         self.ksclient = KeystoneClient(**creds)
 
     def get_endpoint(self, **kwargs):
@@ -31,4 +28,3 @@ class Client(object):
 
     def get_token(self):
         return self.ksclient.auth_token
-

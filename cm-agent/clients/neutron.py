@@ -4,6 +4,7 @@ from neutronclient.neutron import client as NeutronClient
 
 __author__ = 'beb'
 
+
 class Client(object):
     def __init__(self, endpoint, token):
         self.neutron = NeutronClient.Client('2.0', endpoint_url=endpoint, token=token)

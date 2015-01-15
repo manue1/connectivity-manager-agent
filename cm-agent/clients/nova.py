@@ -10,6 +10,7 @@ USERNAME = 'admin'
 PASSWORD = 'pass'
 TENANT_NAME = 'admin'
 
+
 class Client(object):
     def __init__(self):
         kwargs = [USERNAME, PASSWORD, TENANT_NAME, AUTH_URLv2]
@@ -21,9 +22,4 @@ class Client(object):
 
     def get_servers(self):
         servers = self.novaclient.servers.list()
-        return servers
-
-    # not useful
-    def get_hypervisor_servers(self, hyp):
-        servers = self.novaclient.hypervisors.search(hyp, servers=True)
         return servers

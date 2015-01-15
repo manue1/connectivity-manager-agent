@@ -18,7 +18,6 @@ class Agent(object):
     def list_hypervisors(self):
         cloud_info = {}
         interfaces = {}
-        ports = {}
         qoss = {}
         queues = {}
         queue_rates = {}
@@ -35,7 +34,7 @@ class Agent(object):
             cloud_info[kh] = vh
             cloud_info[kh]['servers'] = {}
 
-            hypervisors_servers[kh] = Host(kh).get_server_hypervisor_info(servers, kh)
+            hypervisors_servers[kh] = get_server_hypervisor_info(servers, kh)
             logging.info('Getting list of servers matched with hypervisor: %s', hypervisors_servers)
 
             interfaces[kh] = Host(kh).list_interfaces_hypervisor(hypervisors)
@@ -44,7 +43,7 @@ class Agent(object):
             queues[kh] = Host(kh).list_queues_hypervisor(vh.get('ip'))
             logging.info('Queues for %s: %s', kh, queues)
 
-            queue_rates[kh] = Host(kh).get_queue_rates(vh.get('ip'))
+            queue_rates[kh] = get_queue_rates(vh.get('ip'))
             logging.info('Queue rates for %s: %s', kh, queue_rates)
 
             qoss[kh] = Host(kh).list_qos_hypervisor(vh.get('ip'))
@@ -63,7 +62,8 @@ class Agent(object):
                                 cloud_info[kh]['servers'][hs]['neutron_port'] = neutron_port_id
                                 cloud_info[kh]['servers'][hs]['ovs_port_id'] = ovs_port_id
                                 qos_id = Host(kh).get_port_qos(vh.get('ip'), ovs_port_id)
-                                cloud_info[kh]['servers'][hs]['qos'] = Host(kh).get_qos_queue(qos_id, queues[kh], qoss[kh])
+                                cloud_info[kh]['servers'][hs]['qos'] = get_qos_queue(qos_id, queues[kh],
+                                                                                     qoss[kh])
 
         logging.info('Cloud info: %s', cloud_info)
         return hypervisors
@@ -134,14 +134,6 @@ class Host(object):
         logging.info('Getting OVS interfaces %s :', interfaces)
         return interfaces
 
-    def get_server_hypervisor_info(self, servers, hostname):
-        server_match = []
-        for server in servers.values():
-            if server['OS-EXT-SRV-ATTR:hypervisor_hostname'] == hostname:
-                server_match.append(server['id'])
-        logging.info('Getting servers for matching hypervisor %s: %s', hostname, server_match)
-        return server_match
-
     def list_ports_hypervisor(self, hypervisor_ip):
         ports = self.ovsclient.list_ports(hypervisor_ip)
         logging.info('Getting OVS ports: %s for Hypervisor IP: %s', ports, hypervisor_ip)
@@ -183,53 +175,64 @@ class Host(object):
                             logging.info('QoS ID for port: %s is: %s', ovs_port, qos_id)
         return qos_id
 
-    def get_qos_queue(self, qos_id, queues, hypervisor_qos):
-        qos = {'queues': {}}
 
-        for qoi in hypervisor_qos:
-            match = 0
-            if type(qoi) == unicode:
-                qos['type'] = qoi
-            else:
-                for li in qoi:
-                    if li[1] == qos_id:
-                        match = 1
-                        if li[0] == 'uuid':
-                            qos['uuid'] = li[1]
-                    elif match:
-                        match = 0
-                        for item_inner in li:
-                            if type(item_inner) == list and item_inner[0][0] == 0:
-                                qos['queues'][0] = {}
-                                for queue_inner in item_inner[0][1]:
-                                    if queue_inner != 'uuid':
-                                        qos['queues'][0]['uuid'] = queue_inner
-                                        for qui in queues:
-                                            if qui[0][0] == 'uuid':
-                                                if qui[0][1] == queue_inner:
-                                                    qos['queues'][0]['rates'] = self.get_queue_rates(qui)
+def get_qos_queue(qos_id, queues, hypervisor_qos):
+    qos = {'queues': {}}
 
-        logging.info('Getting OVS queue for QoS ID %s: %s', qos_id, qos)
-        return qos
+    for qoi in hypervisor_qos:
+        match = 0
+        if type(qoi) == unicode:
+            qos['type'] = qoi
+        else:
+            for li in qoi:
+                if li[1] == qos_id:
+                    match = 1
+                    if li[0] == 'uuid':
+                        qos['uuid'] = li[1]
+                elif match:
+                    match = 0
+                    for item_inner in li:
+                        if type(item_inner) == list and item_inner[0][0] == 0:
+                            qos['queues'][0] = {}
+                            for queue_inner in item_inner[0][1]:
+                                if queue_inner != 'uuid':
+                                    qos['queues'][0]['uuid'] = queue_inner
+                                    for qui in queues:
+                                        if qui[0][0] == 'uuid':
+                                            if qui[0][1] == queue_inner:
+                                                qos['queues'][0]['rates'] = get_queue_rates(qui)
 
-    def get_queue_rates(self, queue):
-        queue_rates = {}
+    logging.info('Getting OVS queue for QoS ID %s: %s', qos_id, qos)
+    return qos
 
-        for item in queue:
-            for li in item:
-                if item[0] == 'uuid':
-                    queue_rates['uuid'] = item[1]
-                if li == 'map':
-                    for item_inner in item:
-                        if type(item_inner) == list and len(item_inner) > 0:
-                            for rate_inner in item_inner:
-                                if rate_inner[0] == 'max-rate':
-                                    queue_rates['rates'] = {}
-                                    queue_rates['rates']['max-rate'] = rate_inner[1]
-                                if rate_inner[0] == 'min-rate':
-                                    queue_rates['rates']['min-rate'] = rate_inner[1]
-        logging.info('Queue port rates: %s', queue_rates)
-        return queue_rates
+
+def get_server_hypervisor_info(servers, hostname):
+    server_match = []
+    for server in servers.values():
+        if server['OS-EXT-SRV-ATTR:hypervisor_hostname'] == hostname:
+            server_match.append(server['id'])
+    logging.info('Getting servers for matching hypervisor %s: %s', hostname, server_match)
+    return server_match
+
+
+def get_queue_rates(queue):
+    queue_rates = {}
+
+    for item in queue:
+        for li in item:
+            if item[0] == 'uuid':
+                queue_rates['uuid'] = item[1]
+            if li == 'map':
+                for item_inner in item:
+                    if type(item_inner) == list and len(item_inner) > 0:
+                        for rate_inner in item_inner:
+                            if rate_inner[0] == 'max-rate':
+                                queue_rates['rates'] = {}
+                                queue_rates['rates']['max-rate'] = rate_inner[1]
+                            if rate_inner[0] == 'min-rate':
+                                queue_rates['rates']['min-rate'] = rate_inner[1]
+    logging.info('Queue port rates: %s', queue_rates)
+    return queue_rates
 
 
 def get_server_ip(server):
@@ -246,4 +249,3 @@ def get_port_id(interfaces, server_port):
     ovs_port = re.findall("(qvo.*?[^\'])\"", interfaces[start:end])
     logging.info('Getting OVS port: %s, for Neutron Port ID: %s', ovs_port, server_port)
     return ovs_port
-

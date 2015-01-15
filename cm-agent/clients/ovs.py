@@ -6,7 +6,6 @@ __author__ = 'beb'
 
 
 class Client(object):
-
     def exe_vsctl(self, args):
         # ToDo: ovs-vsctl wrapper?
         # vsctl_args = ["ovs-vsctl"] + args

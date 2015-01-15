@@ -7,17 +7,19 @@ from core.agent import Agent as CMAgent
 
 __author__ = 'beb'
 
+
 def not_found(message):
     response.body = message
     response.status = 404
     return response
 
+
 def encode_dict_json(data_dict):
     data_json = json.dumps(data_dict)
     return data_json
 
-class Application:
 
+class Application:
     def __init__(self, host, port):
         self._host = host
         self._port = port
