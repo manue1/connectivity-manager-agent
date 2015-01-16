@@ -8,7 +8,7 @@ AUTH_URLv2 = 'http://192.168.120.15:5000/v2.0'
 AUTH_URLv3 = 'http://192.168.120.15:5000/v3'
 USERNAME = 'admin'
 PASSWORD = 'pass'
-TENANT_NAME = 'admin'
+TENANT_NAME = 'demo'
 
 
 class Client(object):

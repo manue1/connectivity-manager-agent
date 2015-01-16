@@ -6,15 +6,9 @@ import httplib
 
 __author__ = 'beb'
 
-AUTH_URL_KEYSTONE = 'http://192.168.120.15:5000/v2.0'
-AUTH_URL = 'http://192.168.120.15:5000/v2.0'
-
-USERNAME = 'admin'
-PASSWORD = 'pass'
-TENANT_NAME = 'admin'
-
 PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 HOST = 'localhost'
+
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s_%(process)d:%(lineno)d [%(levelname)s] %(message)s',level=logging.INFO)

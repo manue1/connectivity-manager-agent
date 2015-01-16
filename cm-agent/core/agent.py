@@ -14,6 +14,7 @@ __author__ = 'beb'
 class Agent(object):
     def __init__(self):
         self.cloud = Cloud()
+        self.server = Server()
 
     def list_hypervisors(self):
         cloud_info = {}
@@ -81,7 +82,26 @@ class Agent(object):
                 if type(vs) != unicode:
                     for qos in vs.get('qos'):
                         logging.info('QoS classes %s', qos)
-                        qos_status[ks] = Host(hostname).set_qos_vm(hypervisor, interfaces, ks, qos)
+                        qos_status[ks] = self.server.set_qos_vm(hypervisor, interfaces, ks, qos)
+        return qos_status
+
+
+
+class Server(object):
+    def __init__(self):
+        self.cloud = Cloud()
+
+    def set_qos_vm(self, hypervisor_ip, interfaces, vm_id, qos_rates):
+        qos_status = 0
+        server_ips = self.cloud.get_server_ips()
+
+        for ks, vs in server_ips.items():
+            if ks == vm_id:
+                neutron_port = self.cloud.get_neutron_port(vs[0])
+                ovs_port_id = get_port_id(interfaces, neutron_port)[0]
+                logging.info('OVS port ID for Server %s: %s', ks, ovs_port_id)
+                logging.info('## Min-rate %s Max-rate %s', qos_rates.get('min-rate'), qos_rates.get('max-rate'))
+                #self.ovsclient.create_queue(hypervisor_ip, qos_rates.get('min-rate'), qos_rates.get('max-rate'))
         return qos_status
 
 class Cloud(object):

@@ -5,6 +5,7 @@ from core import agent
 
 __author__ = 'beb'
 
+
 if __name__ == '__main__':
 
     ksclient = Client()
