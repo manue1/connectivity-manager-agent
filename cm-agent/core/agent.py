@@ -67,11 +67,13 @@ class Agent(object):
                                     qos_id = Host(kh).get_port_qos(vh.get('ip'), ovs_port_id)
                                     cloud_info[kh]['servers'][hs]['qos'] = get_qos_queue(qos_id, queues[kh],
                                                                                      qoss[kh])
-                                except:
+                                except Exception, e:
+                                    logging.info('Exception %s', e)
                                     cloud_info[kh]['servers'][hs]['ip'] = None
                                     cloud_info[kh]['servers'][hs]['neutron_port'] = None
                                     cloud_info[kh]['servers'][hs]['ovs_port_id'] = None
                                     cloud_info[kh]['servers'][hs]['qos'] = None
+                                    continue
 
 
         logging.info('Cloud info: %s', cloud_info)
@@ -91,16 +93,6 @@ class Agent(object):
                     qos_status[ks] = self.server.set_qos_vm(hypervisor_ip, interfaces, ks, vs.get('qos'))
         return qos_status
 
-        # for hypervisor in _qos_args.values():
-        #     logging.info('#$#$ Hypervisor %s', hypervisor)
-        #     hostname = hypervisor.get('hostname')
-        #     interfaces = Host(hostname).list_interfaces_hypervisor(hypervisors)
-        #     for ks, vs in hypervisor.items():
-        #         if type(vs) != unicode:
-        #             logging.info('QoS rates for server %s: %s', ks, vs.get('qos'))
-        #             qos_status[ks] = self.server.set_qos_vm(hypervisor, interfaces, ks, vs.get('qos'))
-        # return qos_status
-
 
 class Server(object):
     def __init__(self):
@@ -119,7 +111,9 @@ class Server(object):
                 logging.info('Server %s gets Min-rate %s Max-rate %s', ks, qos_rates.get('min-rate'), qos_rates.get('max-rate'))
                 queue_id = self.ovsclient.create_queue(hypervisor_ip, int(qos_rates.get('min-rate')), int(qos_rates.get('max-rate')))
                 logging.info('Queue ID for Server %s: %s', ks, queue_id)
-                qos_status = self.ovsclient.create_qos(hypervisor_ip, queue_id)
+                qos_id = self.ovsclient.create_qos(hypervisor_ip, queue_id)
+                qos_status = self.ovsclient.set_port(hypervisor_ip, ovs_port_id, 'qos', qos_id)
+                logging.info('QoS status for Server %s: %s', ks, qos_status)
         return qos_status
 
 class Cloud(object):
@@ -215,10 +209,14 @@ class Host(object):
         for port in ports_raw.get('data'):
             isvm = 0
             for port_key in port:
+                logging.info('#### port key: %s', port_key)
                 if type(port_key) == unicode and port_key == ovs_port:
                     isvm = 1
+                    logging.info('## is vm ##')
                 if type(port_key) == list and isvm:
+                    isvm = 0
                     for pv in port_key:
+                        logging.info('##### pv: %s', pv)
                         if pv != 'uuid':
                             qos_id = pv
                             logging.info('QoS ID for port: %s is: %s', ovs_port, qos_id)
