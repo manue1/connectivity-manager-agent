@@ -6,7 +6,7 @@ __author__ = 'beb'
 
 USERNAME = 'admin'
 PASSWORD = 'pass'
-TENANT_NAME = 'demo'
+TENANT_NAME = 'admin'
 AUTH_URLv2 = 'http://192.168.120.15:5000/v2.0'
 
 
