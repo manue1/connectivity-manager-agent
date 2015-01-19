@@ -57,7 +57,6 @@ class Agent(object):
                         cloud_info[kh]['servers'][hs]['name'] = vs.get('name')
                         for ki, vi in server_ips.items():
                             if ki == hs:
-                                # ToDo: exception handling if no IP attached to VM
                                 try:
                                     cloud_info[kh]['servers'][hs]['ip'] = vi[0]
                                     neutron_port_id = self.cloud.get_neutron_port(vi[0])
@@ -209,14 +208,11 @@ class Host(object):
         for port in ports_raw.get('data'):
             isvm = 0
             for port_key in port:
-                logging.info('#### port key: %s', port_key)
                 if type(port_key) == unicode and port_key == ovs_port:
                     isvm = 1
-                    logging.info('## is vm ##')
                 if type(port_key) == list and isvm:
                     isvm = 0
                     for pv in port_key:
-                        logging.info('##### pv: %s', pv)
                         if pv != 'uuid':
                             qos_id = pv
                             logging.info('QoS ID for port: %s is: %s', ovs_port, qos_id)
