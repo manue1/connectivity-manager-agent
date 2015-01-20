@@ -130,10 +130,11 @@ class Cloud(object):
             # host_info[hypervisor.id]['all'] = hypervisor._info
             host_info[hypervisor.hypervisor_hostname]['id'] = hypervisor.id
             host_info[hypervisor.hypervisor_hostname]['ip'] = hypervisor.host_ip
-            host_info[hypervisor.hypervisor_hostname]['vm_count'] = hypervisor.running_vms
+            host_info[hypervisor.hypervisor_hostname]['instances'] = hypervisor.running_vms
             host_info[hypervisor.hypervisor_hostname]['cpu_used'] = hypervisor.vcpus_used
             host_info[hypervisor.hypervisor_hostname]['cpu_total'] = hypervisor.vcpus
-            host_info[hypervisor.hypervisor_hostname]['ram_free'] = hypervisor.free_ram_mb
+            host_info[hypervisor.hypervisor_hostname]['ram_used'] = hypervisor.memory_mb_used
+            host_info[hypervisor.hypervisor_hostname]['ram_total'] = hypervisor.memory_mb
         logging.info('Reading info of all hypervisors %s', host_info)
         return host_info
 
