@@ -91,7 +91,6 @@ class Application:
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s_%(process)d:%(lineno)d [%(levelname)s] %(message)s',level=logging.INFO)
-
     server = Application(host='0.0.0.0', port=8091)
     print('Connectivity Manager Agent serving on port 8091...')
     server.start()
