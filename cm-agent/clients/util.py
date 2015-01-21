@@ -34,7 +34,7 @@ def get_credentials():
     # print 'Credentials: %s' % creds
     # ##Fetch Credentials from Configuration
     logging.info('Fetch Credentials from SysUtil')
-    conf = _read_properties()
+    conf = read_properties()
     # conf = DatabaseManager().get_by_name(Configuration, "SystemConfiguration")[0]
     #print "props: %s" % conf.props
     creds['tenant_name'] = conf.get('os_tenant', '')
