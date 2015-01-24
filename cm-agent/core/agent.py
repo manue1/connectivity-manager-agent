@@ -83,13 +83,12 @@ class Agent(object):
         hypervisors = self.cloud.read_hypervisor_info()
 
         _qos_args = json.loads(qos_args)
-        for hypervisor_ip, v in _qos_args.items():
-            hostname = v.get('hostname')
-            interfaces = Host(hostname).list_interfaces_hypervisor(hypervisors)
+        for hypervisor_hostname, v in _qos_args.items():
+            interfaces = Host(hypervisor_hostname).list_interfaces_hypervisor(hypervisors)
             for ks, vs in v.items():
                 if type(vs) != unicode:
                     logging.info('QoS rates for server %s: %s', ks, vs.get('qos'))
-                    qos_status[ks] = self.server.set_qos_vm(hypervisor_ip, interfaces, ks, vs.get('qos'))
+                    qos_status[ks] = self.server.set_qos_vm(self.cloud.get_hypervisor_ip(hypervisor_hostname), interfaces, ks, vs.get('qos'))
         return qos_status
 
 
@@ -137,6 +136,12 @@ class Cloud(object):
             host_info[hypervisor.hypervisor_hostname]['ram_total'] = hypervisor.memory_mb
         logging.info('Reading info of all hypervisors %s', host_info)
         return host_info
+
+    def get_hypervisor_ip(self, hyp_hostname):
+        hypervisors = self.novaclient.get_hypervisors()
+        for hypervisor in hypervisors:
+            if hypervisor.hypervisor_hostname == hyp_hostname:
+                return hypervisor.host_ip
 
     def read_server_info(self):
         server_info = {}
