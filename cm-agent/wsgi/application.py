@@ -66,7 +66,8 @@ class Application:
         """
         List all OpenStack hypervisors with runtime details
         """
-        hypervisors = self.agent.list_hypervisors()
+        agent = CMAgent()
+        hypervisors = agent.list_hypervisors()
 
         response.body = encode_dict_json(hypervisors)
         print "Hypervisor list response"

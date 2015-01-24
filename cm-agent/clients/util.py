@@ -10,8 +10,8 @@ __author__ = 'beb'
 
 def read_properties():
     props = {}
-    with open('%s/cm-agent.conf' % PATH, 'r') as f:
-        logging.info('Using %s/cm-agent.conf file', PATH)
+    with open('%s/cm-agent.properties' % PATH, 'r') as f:
+        logging.info('Using %s/cm-agent.properties file', PATH)
         for line in f:
             line = line.rstrip()
 
@@ -19,7 +19,6 @@ def read_properties():
                 continue
             if line.startswith("#"):
                 continue
-
             k, v = line.split("=", 1)
             props[k] = v
         return props
