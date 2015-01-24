@@ -88,7 +88,8 @@ class Agent(object):
             for ks, vs in v.items():
                 if type(vs) != unicode:
                     logging.info('QoS rates for server %s: %s', ks, vs.get('qos'))
-                    qos_status[ks] = self.server.set_qos_vm(self.cloud.get_hypervisor_ip(hypervisor_hostname), interfaces, ks, vs.get('qos'))
+                    qos_status[ks] = self.server.set_qos_vm(self.cloud.get_hypervisor_ip(hypervisor_hostname),
+                                                            interfaces, ks, vs.get('qos'))
         return qos_status
 
 

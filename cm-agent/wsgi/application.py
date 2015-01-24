@@ -20,6 +20,11 @@ def bad_request(param):
     response.content_type = 'application/json'
     return response
 
+def internal_error(message):
+    response.body = message
+    response.status = 500
+    response.content_type = 'application/json'
+    return response
 
 def not_found(message):
     response.body = message
@@ -70,8 +75,7 @@ class Application:
         hypervisors = agent.list_hypervisors()
 
         response.body = encode_dict_json(hypervisors)
-        print "Hypervisor list response"
-        print response.body
+        logging.debug('Hypervisor list response', response.body)
         response.status = 200
         response.content_type = 'application/json'
         return response
@@ -81,13 +85,17 @@ class Application:
         Set QoS for VMs
         """
         qos_json = request.body.getvalue()
-        logging.info('QoS JSON is: %s', qos_json)
+        logging.debug('QoS JSON is: %s', qos_json)
         if not qos_json:
             return bad_request('This POST methods requires a valid JSON')
-        set_qos = self.agent.set_qos(qos_json)
-        response.body = encode_dict_json(set_qos)
+        try:
+            set_qos = self.agent.set_qos(qos_json)
+        except Exception, exc:
+            logging.error(exc.message)
+            return internal_error(exc.message)
         response.status = 200
-        #response.content_type = 'application/json'
+        response.body = 'QoS processed.'
+        #response.body = encode_dict_json(set_qos)
         return response
 
 if __name__ == '__main__':
