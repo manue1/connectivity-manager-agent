@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONFIG_DIR="/etc/nubomedia"
-PROPERTIES_FILE="$CONFIG_DIR/cm-agent.conf"
+PROPERTIES_FILE="$CONFIG_DIR/cm-agent.properties"
 SOURCE_CODE_DIR="cm-agent"
 DEST="/opt/nubomedia"
 
@@ -39,7 +39,7 @@ function create_config_dir {
 }
 
 function copy_properties_file {
-  cp cm-agent/cm-agent.conf $PROPERTIES_FILE 
+  cp cm-agent/cm-agent.properties $PROPERTIES_FILE 
 }
 
 function copy_source_code {
@@ -195,7 +195,7 @@ function setup_virtualenv {
 
 function start_screen {
   echo "For starting the Connectivity Manager agent please switch to $DEST/$SOURCE_CODE_DIR"
-  echo "and run the following command: 'venv/bin/python cm-agent/wsgi/application.py'!"
+  echo "and run the following command: 'venv/bin/python wsgi/application.py'!"
   #cd "$SOURCE_CODE_DIR"
   #screen -d -m -S cm-agent venv/bin/python cm-agent/wsgi/application.py
 }
