@@ -1,4 +1,17 @@
-#!/usr/bin/python
+# Copyright 2015 Technische Universitaet Berlin
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 
 import json
 import logging
@@ -20,11 +33,13 @@ def bad_request(param):
     response.content_type = 'application/json'
     return response
 
+
 def internal_error(message):
     response.body = message
     response.status = 500
     response.content_type = 'application/json'
     return response
+
 
 def not_found(message):
     response.body = message
@@ -32,13 +47,16 @@ def not_found(message):
     response.content_type = 'application/json'
     return response
 
+
 def encode_dict_json(data_dict):
     data_json = json.dumps(data_dict)
     return data_json
 
+
 """
 # ReST API
 """
+
 
 class Application:
     def __init__(self, host, port):
