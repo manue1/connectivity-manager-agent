@@ -1,4 +1,17 @@
-#!/usr/bin/python
+# Copyright 2015 Technische Universitaet Berlin
+# All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
 
 import json
 import logging
@@ -21,19 +34,29 @@ def bad_request(param):
     return response
 
 
+def internal_error(message):
+    response.body = message
+    response.status = 500
+    response.content_type = 'application/json'
+    return response
+
+
 def not_found(message):
     response.body = message
     response.status = 404
     response.content_type = 'application/json'
     return response
 
+
 def encode_dict_json(data_dict):
     data_json = json.dumps(data_dict)
     return data_json
 
+
 """
 # ReST API
 """
+
 
 class Application:
     def __init__(self, host, port):
@@ -66,11 +89,11 @@ class Application:
         """
         List all OpenStack hypervisors with runtime details
         """
-        hypervisors = self.agent.list_hypervisors()
+        agent = CMAgent()
+        hypervisors = agent.list_hypervisors()
 
         response.body = encode_dict_json(hypervisors)
-        print "Hypervisor list response"
-        print response.body
+        logging.debug('Hypervisor list response', response.body)
         response.status = 200
         response.content_type = 'application/json'
         return response
@@ -80,18 +103,22 @@ class Application:
         Set QoS for VMs
         """
         qos_json = request.body.getvalue()
-        logging.info('QoS JSON is: %s', qos_json)
+        logging.debug('QoS JSON is: %s', qos_json)
         if not qos_json:
             return bad_request('This POST methods requires a valid JSON')
-        set_qos = self.agent.set_qos(qos_json)
-        response.body = encode_dict_json(set_qos)
+        try:
+            set_qos = self.agent.set_qos(qos_json)
+        except Exception, exc:
+            logging.error(exc.message)
+            return internal_error(exc.message)
         response.status = 200
-        #response.content_type = 'application/json'
+        response.body = 'QoS processed.'
+        logging.debug('QoS processed.')
+        #response.body = encode_dict_json(set_qos)
         return response
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s_%(process)d:%(lineno)d [%(levelname)s] %(message)s',level=logging.INFO)
-
     server = Application(host='0.0.0.0', port=8091)
     print('Connectivity Manager Agent serving on port 8091...')
     server.start()

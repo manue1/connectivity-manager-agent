@@ -1,16 +1,13 @@
 {
-    "192.168.120.16": {
-        "hostname": "compute",
-
-        "9dcb8549-1544-4cfa-8a35-e79a7e8010e2": {
-            "name": "MediaServer-1",
+    "compute": {
+        "5f781ca4-4fb1-4746-ab14-39907d5f6781": {
+            "name": "ControllerServer-1",
             "qos": {
                 "max-rate": "200000000",
                 "min-rate": "50000000"
             }
         },
-
-        "d1490fe9-4b1f-40c9-9a1e-8300b06b2409": {
+        "b54ee024-a170-4278-9c3b-983c0791cc50": {
             "name": "BrokerServer-1",
             "qos": {
                 "max-rate": "200000000",
@@ -18,18 +15,16 @@
             }
         }
     },
-    "192.168.120.15": {
-        "hostname": "control",
-
-        "69cb9183-65e8-44c7-bde4-39a32812074d": {
+    "control": {
+        "2ebc669f-e42b-46ca-a4cd-a6d972d13290": {
             "name": "ControllerServer-1",
             "qos": {
                 "max-rate": "10000000000",
                 "min-rate": "100000000"
             }
         },
-        "6defb1ba-866b-40af-8b9a-23e4afd81683": {
-            "name": "MediaServer-2",
+        "18c42e74-fc0d-4b66-baff-df793c25f08d": {
+            "name": "BrokerServer-1",
             "qos": {
                 "max-rate": "10000000000",
                 "min-rate": "1000000000"
