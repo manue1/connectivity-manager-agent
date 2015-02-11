@@ -11,6 +11,6 @@ if __name__ == '__main__':
     headers = {'Content-type': 'application/json'}
 
     # Retrieve list of hypervisors
-    connection.request('GET', '/hypervisors')
+    connection.request('GET', '/hosts')
     response = connection.getresponse()
     print response.read()
