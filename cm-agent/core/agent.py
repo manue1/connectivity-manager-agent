@@ -292,11 +292,13 @@ class Host(object):
         return qos_id
 
     def set_qos_vm(self, hypervisor_ip, interfaces, vm_id, qos_rates):
-        qos_status = 0
+        qos_status = {}
+        found_match = 0
         server_ips = self.cloud.get_server_ips()
 
         for ks, vs in server_ips.items():
             if ks == vm_id:
+                found_match = 1
                 neutron_port = self.cloud.get_neutron_port(vs[0])
                 ovs_port_id = self.cloud.get_port_id(interfaces, neutron_port)[0]
                 logging.info('OVS port ID for Server %s: %s', ks, ovs_port_id)
@@ -305,5 +307,10 @@ class Host(object):
                 logging.info('Queue ID for Server %s: %s', ks, queue_id)
                 qos_id = self.ovsclient.create_qos(hypervisor_ip, queue_id)
                 qos_status = self.ovsclient.set_port(hypervisor_ip, ovs_port_id, 'qos', qos_id)
+                if not qos_status:
+                    qos_status = qos_rates
                 logging.info('QoS status for Server %s: %s', ks, qos_status)
-        return qos_status
+        if not found_match:
+            return 0
+        else:
+            return qos_status
