@@ -102,6 +102,7 @@ class Agent(object):
                     logging.info('QoS rates for server %s: %s', ks, vs.get('qos'))
                     qos_status[ks] = Host(hypervisor_hostname).set_qos_vm(self.cloud.get_hypervisor_ip(hypervisor_hostname),
                                                             interfaces, ks, vs.get('qos'))
+        logging.info('QoS status after setting: %s', qos_status)
         return qos_status
 
 
@@ -180,7 +181,7 @@ class Cloud(object):
                                         for qui in queues:
                                             if qui[0][0] == 'uuid':
                                                 if qui[0][1] == queue_inner:
-                                                    qos['queues'][0]['rates'] = self.get_queue_rates(qui)
+                                                    qos['queues'][0] = self.get_queue_rates(qui)
 
         logging.info('Getting OVS queue for QoS ID %s: %s', qos_id, qos)
         return qos
