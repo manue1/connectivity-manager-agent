@@ -102,7 +102,7 @@ class Agent(object):
                     logging.info('QoS rates for server %s: %s', ks, vs.get('qos'))
                     qos_status[ks] = Host(hypervisor_hostname).set_qos_vm(self.cloud.get_hypervisor_ip(hypervisor_hostname),
                                                             interfaces, ks, vs.get('qos'))
-        logging.info('QoS status after setting: %s', qos_status)
+        logging.info('QoS status after POST: %s', qos_status)
         return qos_status
 
 

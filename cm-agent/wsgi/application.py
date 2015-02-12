@@ -112,9 +112,8 @@ class Application:
             logging.error(exc.message)
             return internal_error(exc.message)
         response.status = 200
-        response.body = 'QoS processed.'
-        logging.debug('QoS processed.')
-        #response.body = encode_dict_json(set_qos)
+        response.body = encode_dict_json(set_qos)
+        logging.debug('QoS processed: %s', response.body)
         return response
 
 if __name__ == '__main__':
