@@ -193,11 +193,11 @@ function setup_virtualenv {
   cd ..
 }
 
-function start_screen {
-  echo "For starting the Connectivity Manager agent please switch to $DEST/$SOURCE_CODE_DIR"
-  echo "and run the following command: 'venv/bin/python wsgi/application.py'!"
-  #cd "$SOURCE_CODE_DIR"
-  #screen -d -m -S cm-agent venv/bin/python cm-agent/wsgi/application.py
+function start_cma {
+  echo "For starting the Connectivity Manager in a screen session, manually create one first using 'screen -d -m -S cm-agent'"
+  echo "and then rerun this command"
+  cd "$SOURCE_CODE_DIR"
+  venv/bin/python wsgi/application.py
 }
 
 
@@ -219,7 +219,6 @@ init)
   check_root_privileges
   check_location
   set_openstack_credentials
-  check_database_existing
   ;;
 update) 
   check_root_privileges 
@@ -230,7 +229,7 @@ update)
 start)  
   check_root_privileges 
   check_location
-  start_screen
+  start_cma
 
   ;;  
 uninstall)
