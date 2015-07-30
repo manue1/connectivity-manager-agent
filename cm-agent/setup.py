@@ -18,5 +18,5 @@ setup(
     license='',
     author='beb',
     author_email='',
-    description='Nubomedia CM',
+    description='Connectivity Manager Agent',
 )

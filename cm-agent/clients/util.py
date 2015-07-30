@@ -15,7 +15,7 @@
 
 import logging
 
-PATH = '/etc/nubomedia'
+PATH = '/etc/cm-agent'
 
 __author__ = 'beb'
 
@@ -54,5 +54,3 @@ def get_credentials():
     creds['auth_url'] = conf.get('os_auth_url', '')
     logging.info('Credentials: %s', creds)
     return creds
-
-

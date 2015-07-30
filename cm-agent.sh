@@ -1,9 +1,9 @@
 #!/bin/bash
 
-CONFIG_DIR="/etc/nubomedia"
+CONFIG_DIR="/opt/config"
 PROPERTIES_FILE="$CONFIG_DIR/cm-agent.properties"
 SOURCE_CODE_DIR="cm-agent"
-DEST="/opt/nubomedia"
+DEST="/opt/cm"
 
 function check_location {
   if [ ! -d "$SOURCE_CODE_DIR" ];
@@ -14,7 +14,7 @@ function check_location {
 }
 
 function check_root_privileges {
-  if [[ $EUID -ne 0 ]]; 
+  if [[ $EUID -ne 0 ]];
   then
     echo "This option must be run as root." 1>&2
     exit 1
@@ -22,7 +22,7 @@ function check_root_privileges {
 }
 
 function check_no_root_privileges {
-  if [[ $EUID -eq 0 ]]; 
+  if [[ $EUID -eq 0 ]];
   then
     echo "Run this option without root privileges." 1>&2
     exit 1
@@ -39,14 +39,14 @@ function create_config_dir {
 }
 
 function copy_properties_file {
-  cp cm-agent/cm-agent.properties $PROPERTIES_FILE 
+  cp cm-agent/cm-agent.properties $PROPERTIES_FILE
 }
 
 function copy_source_code {
   if ! [ -d "$DEST" ]; then
     mkdir $DEST
   fi
-  cp -r ./cm-agent /opt/nubomedia
+  cp -r ./cm-agent $DEST
 }
 
 function set_openstack_credentials {
@@ -89,8 +89,8 @@ function check_openstack_credentials {
         echo "No tenant name, username or password was set for Openstack. Run init first."
         exit 1
       fi
-    done < "$PROPERTIES_FILE" 
-  else 
+    done < "$PROPERTIES_FILE"
+  else
     echo "No tenant name, username, password or auth_url was set for Openstack. Run init first."
     exit 1
   fi
@@ -157,7 +157,7 @@ function install_pkg {
 function install_pip_pkg {
   if ! is_pip_pkg_installed "$1"; then
     echo "Installing $1"
-    pip install $1 
+    pip install $1
     if [ "$?" ]; then
       echo "$1 was installed successfully"
     else
@@ -220,18 +220,18 @@ init)
   check_location
   set_openstack_credentials
   ;;
-update) 
-  check_root_privileges 
+update)
+  check_root_privileges
   check_location
   git pull
   compile_and_install_server
   ;;
-start)  
-  check_root_privileges 
+start)
+  check_root_privileges
   check_location
   start_cma
 
-  ;;  
+  ;;
 uninstall)
   check_root_privileges
   check_location
@@ -248,5 +248,3 @@ clean)  rm -rf build
   echo "  clean     - remove build files"
   ;;
 esac
-
-
